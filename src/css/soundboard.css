@@ -1,0 +1,116 @@
+.table td {
+    background-color: var(--def-button);
+    color: var(--def-text);
+    font-weight: 400;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.table td:hover {
+    background-color: var(--def-button-hover);
+    color: var(--def-text-hover);
+}
+
+.table td:active {
+    background-color: var(--def-button-clicked);
+    color: var(--white);
+}
+
+#player {
+    background-color: var(--primary-dark);
+    border-top: 1px solid var(--def-button);
+    z-index: 10;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+}
+
+#leftBtns {
+    margin-left: auto;
+}
+
+.external {
+    width: 100%;
+}
+
+.slider {
+    height: 50px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.slider-container {
+    position: relative;
+}
+
+.range-label {
+    width: 100%;
+    margin-bottom: 0;
+    text-align: center;
+    font-size: 75%;
+    color: var(--def-text);
+}
+
+.form-range::-webkit-slider-runnable-track {
+    border-radius: 1rem;
+    background-color: transparent;
+}
+
+.range {
+    z-index: 100;
+}
+
+.progress {
+    background-color: var(--light);
+    margin-top: 10px;
+}
+
+.progress,
+.progress-bar {
+    border-radius: 1rem;
+}
+
+.range,
+.progress {
+    position: absolute;
+    width: 100%;
+    top: 0;
+    left: 0;
+}
+
+.progress-bar {
+    -webkit-transition: initial !important;
+    transition: initial !important;
+}
+
+.progress-bar.active, .progress.active .progress-bar {
+    -webkit-animation: initial !important;
+    animation: initial !important;
+}
+
+#trackContainer p {
+    font-size: 75%;
+    text-align: center;
+    color: var(--def-text);
+}
+
+#tableSize {
+    max-width: 75px;
+}
+
+#tableSize label {
+    font-size: 75%;
+}
+
+#tableSize input {
+    font-size: 90%;
+}

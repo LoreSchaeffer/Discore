@@ -1,0 +1,81 @@
+@media screen and (max-width: 991px){
+    .navbar .nav-item {
+        margin-top: 7px;
+    }
+}
+
+#mainContainer {
+    max-height: calc(100% - 22px);
+    overflow-y: auto;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+#playlist {
+    list-style-type: none;
+    padding-left: 0 !important;
+}
+
+.track {
+    padding: 0.75em 1em;
+    user-select: none;
+    -webkit-user-select: none;
+    max-width: 100%;
+}
+
+.track:hover {
+    background-color: var(--def-button-hover);
+}
+
+.track-data {
+    display: flex;
+}
+
+.track-image {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.track-info {
+    margin-left: 1em;
+    margin-right: 1em;
+}
+
+.track-title {
+    font-size: 90%;
+    margin-bottom: 0;
+}
+
+.track-author {
+    font-size: 80%;
+    margin-bottom: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.track-length {
+    font-size: 70%;
+    margin-bottom: 0;
+    color: var(--def-text);
+}
+
+.track-icons {
+    max-width: 40px;
+    margin-left: auto;
+    margin-right: 1em;
+}
+
+.track-icons .col-6 {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.btn-track {
+    width: 25px;
+    height: 25px;
+    padding: 0;
+    margin: 5px;
+}

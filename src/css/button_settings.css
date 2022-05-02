@@ -1,0 +1,117 @@
+.navbar .nav-item {
+    margin-top: 7px;
+}
+
+#mainContainer {
+    overflow: hidden;
+}
+
+#title {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.spacer {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.form-label {
+    font-size: 90%;
+    margin-bottom: 5px;
+}
+
+#srcInputContainer {
+    display: inline-block;
+    width: 420px;
+}
+
+#srcFile {
+    display: none;
+}
+
+#dirBtn {
+    float: right;
+}
+
+#colorsContainer .col {
+    display: flex;
+    align-items: center
+}
+
+#colorsContainer {
+    margin-top: 10px;
+}
+
+#colorsContainer label {
+    margin-right: 10px;
+}
+
+input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 7px;
+    padding: 1px;
+    background-color: var(--primary-dark);
+    margin-right: 20px;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+    border: none;
+    border-radius: 7px;
+    padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 7px;
+    padding: 0;
+}
+
+.number-spinner {
+    border: 2px solid var(--def-button);
+}
+
+.form-select {
+    background-color: transparent;
+    border: 2px solid var(--def-button);
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23ABABAB' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
+    color: var(--def-text);
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+option {
+    background-color: var(--primary-dark);
+    margin-top: 10px;
+}
+
+#hotkeyContainer {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+#chgHtkBtn {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 0;
+}
+
+#btnContainer {
+    margin-top: 10px;
+    float: right;
+}
+
+.btn-primary {
+    min-width: 95px;
+}
+
+.btn i {
+    margin-right: 6px;
+}

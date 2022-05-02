@@ -1,0 +1,33 @@
+.navbar .nav-item {
+    margin-top: 7px;
+}
+
+.nav-spacer {
+    margin-top: 32px;
+}
+
+#srcContainer {
+    margin-top: 10px;
+}
+
+#srcInputContainer {
+    display: inline-block;
+    width: 420px;
+}
+
+#srcFile {
+    display: none;
+}
+
+#dirBtn {
+    float: right;
+}
+
+#btnContainer {
+    margin-top: 10px;
+    float: right;
+}
+
+.btn-primary {
+    min-width: 95px;
+}

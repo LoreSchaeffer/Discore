@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Discore</title>
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="libs/fontawesome/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet">
+    <link href="libs/mdb/css/mdb.dark.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/button_settings.css">
+    <script>window.$ = window.jQuery = require('jquery');</script>
+    <script type="text/javascript" src="libs/mdb/js/mdb.min.js" defer></script>
+    <script src="js/scripts.js" defer></script>
+    <script src="js/button_settings.js" defer></script>
+</head>
+<body>
+<nav class="navbar navbar-expand navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li id="navMenu" class="nav-item"><div class="icon"></div></li>
+            </ul>
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li id="navMinimize" class="nav-item"><div class="icon"></div></li>
+                <li id="navMaximize" class="nav-item disabled"><div class="icon"></div></li>
+                <li id="navClose" class="nav-item"><div class="icon"></div></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="nav-spacer"></div>
+<div id="mainContainer" class="container-fluid">
+    <h6 id="title">Button</h6>
+    <div id="srcContainer">
+        <div id="srcInputContainer" class="form-outline mb-2">
+            <input type="text" id="src" class="form-control" />
+            <input type="file" id="srcFile" accept="audio/*,video/*">
+            <label class="form-label" for="src">Source</label>
+        </div>
+        <button id="dirBtn" class="btn btn-floating btn-blue" role="button"><i class="fas fa-folder-open"></i></button>
+    </div>
+    <div id="volumeContainer">
+        <label class="form-label" for="volume">Volume</label>
+        <div class="range">
+            <input type="range" class="form-range" id="volume" min="-100" max="100" step="1" value="0" />
+        </div>
+    </div>
+    <div class="spacer"></div>
+    <div id="btnTextContainer" class="form-outline mb-2">
+        <input type="url" id="btnTxt" class="form-control" />
+        <label class="form-label" for="btnTxt">Text</label>
+    </div>
+    <div id="colorsContainer">
+        <div class="row">
+            <div class="col">
+                <label for="btnColor" class="form-label">Button Color</label>
+                <input type="color" id="btnColor" value="#2F3136">
+                <button id="rstBtnColor" class="btn btn-floating btn-blue btn-sm" role="button"><i class="fas fa-undo-alt"></i></button>
+            </div>
+            <div class="col">
+                <label for="txtColor" class="form-label">Text Color</label>
+                <input type="color" id="txtColor" value="#ABABAB">
+                <button id="rstTxtColor" class="btn btn-floating btn-blue btn-sm" role="button"><i class="fas fa-undo-alt"></i></button>
+            </div>
+        </div>
+    </div>
+    <div class="spacer"></div>
+    <div id="cropContainer">
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="enableCropping" />
+            <label class="form-check-label" for="enableCropping">Crop Sound</label>
+        </div>
+        <div class="row mb-2">
+            <div class="col">
+                <label class="form-label">Start sound at</label>
+            </div>
+            <div class="col">
+                <div class="number-spinner">
+                    <span data-for="start" class="spinner-element next"><i class="fas fa-plus"></i></span>
+                    <span data-for="start" class="spinner-element prev"><i class="fas fa-minus"></i></span>
+                    <input id="start" type="number" class="number-input num-input-spinner" value="0" min="0" disabled />
+                </div>
+            </div>
+            <div class="col">
+                <select id="startTU" class="form-select form-select-sm" disabled>
+                    <option value="s" selected>Seconds</option>
+                    <option value="ms">Milliseconds</option>
+                    <option value="m">Minutes</option>
+                </select>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col">
+                <label class="form-label">Stop sound</label>
+            </div>
+            <div class="col">
+                <select id="endPos" class="form-select form-select-sm" disabled>
+                    <option value="at" selected>At</option>
+                    <option value="after">After</option>
+                </select>
+            </div>
+            <div class="col">
+                <div class="number-spinner">
+                    <span data-for="end" class="spinner-element next"><i class="fas fa-plus"></i></span>
+                    <span data-for="end" class="spinner-element prev"><i class="fas fa-minus"></i></span>
+                    <input id="end" type="number" class="number-input num-input-spinner" value="0" min="0" disabled />
+                </div>
+            </div>
+            <div class="col">
+                <select id="endTU" class="form-select form-select-sm" disabled>
+                    <option value="s" selected>Seconds</option>
+                    <option value="ms">Milliseconds</option>
+                    <option value="m">Minutes</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="spacer"></div>
+    <div id="hotkeyContainer">
+        <h6>Hotkey</h6>
+        <label class="form-label">Current hotkey:</label>
+        <button id="chgHtkBtn" class="btn btn-primary btn-blue" disabled>Change</button>
+    </div>
+    <div class="spacer"></div>
+    <div id="btnContainer">
+        <button id="previewBtn" class="btn btn-primary btn-blue"><i class="fas fa-play"></i>Preview</button>
+        <button id="cancelBtn" class="btn btn-primary btn-blue">Cancel</button>
+        <button id="saveBtn" class="btn btn-primary btn-blue">Apply</button>
+    </div>
+</div>
+</body>
+</html>
