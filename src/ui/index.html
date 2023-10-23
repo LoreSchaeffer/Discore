@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>ESoundboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="libs/css/roboto.css"/>
+    <link rel="stylesheet" href="libs/mdb/css/mdb.dark.min.css">
+    <link rel="stylesheet" href="libs/fontawesome/css/fontawesome.min.css"/>
+    <link rel="stylesheet" href="libs/fontawesome/css/all.min.css"/>
+    <link rel="stylesheet" href="css/styles.css"/>
+    <link rel="stylesheet" href="css/index.css"/>
+</head>
+<body>
+<nav class="navbar navbar-expand navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li id="navMenu" class="nav-item"><div class="icon"></div></li>
+            </ul>
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li id="navMinimize" class="nav-item"><div class="icon"></div></li>
+                <li id="navMaximize" class="nav-item"><div class="icon"></div></li>
+                <li id="navClose" class="nav-item"><div class="icon"></div></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div id="mainContainer" class="container-fluid">
+    <div id="soundboard"></div>
+    <div id="player" class="container-fluid fixed-bottom">
+        <div id="leftBtnGroup" class="btns-group">
+            <a id="playPause" role="button" class="btn text-white btn-player" style="background-color: var(--green);" href="#!"><i class="fa-solid fa-play"></i></a>
+            <a id="stop" role="button" class="btn text-white btn-player" style="background-color: var(--red);" href="#!"><i class="fa-solid fa-stop"></i></a>
+        </div>
+        <div id="seekBarsContainer">
+            <label class="form-label" for="volume">Volume</label>
+            <div class="range">
+                <input id="volume" type="range" class="form-range" min="0" max="100" step="1" value="50">
+            </div>
+            <div class="range">
+                <input id="progress" type="range" class="form-range" min="0" max="100" step="100" value="0" disabled>
+            </div>
+            <p id="trackName">&nbsp;</p>
+        </div>
+        <div id="soundboardSettings">
+            <label id="rowsLabel" for="rows">Rows</label>
+            <div class="number-spinner">
+                <span data-for="rows" class="spinner-element next"><i class="fas fa-plus"></i></span>
+                <span data-for="rows" class="spinner-element prev"><i class="fas fa-minus"></i></span>
+                <input id="rows" type="number" class="number-input num-input-spinner" value="0" min="1" />
+            </div>
+            <label for="cols">Columns</label>
+            <div class="number-spinner">
+                <span data-for="cols" class="spinner-element next"><i class="fas fa-plus"></i></span>
+                <span data-for="cols" class="spinner-element prev"><i class="fas fa-minus"></i></span>
+                <input id="cols" type="number" class="number-input num-input-spinner" value="0" min="1" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="libs/js/jquery-3.7.1.min.js"></script>
+<script src="libs/mdb/js/mdb.min.js"></script>
+<script src="js/scripts.js"></script>
+<script src="js/index.js"></script>
+</body>
+</html>

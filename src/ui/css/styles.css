@@ -1,0 +1,343 @@
+:root {
+    --blurple: #5865F2;
+    --grayple: #99AAB5;
+    --dark-but-not-black: #2C2F33;
+    --not-quite-black: #23272A;
+
+    --dark-blue: #0D47A1;
+    --blue: #4285F4;
+    --blue-hover: #3770CC;
+    --blue-active: #3062B3;
+    --indigo: #283593;
+    --purple: #4527A0;
+    --pink: #E91E63;
+    --pure-red: #ff0000;
+    --red: #ED4245;
+    --red-hover: #DB2121;
+    --red-active: #BF1D1D;
+    --dark-red: #B71C1C;
+    --orange: #FB8C00;
+    --yellow: #FEE75C;
+    --yellow-hover: #F5A700;
+    --yellow-active: #F58F00;
+    --light-yellow: #FFEB3B;
+    --green: #0F9D58;
+    --green-hover: #0E8C4F;
+    --green-active: #0A663A;
+    --teal: #009688;
+    --cyan: #00ACC1;
+    --white: #FFFFFF;
+    --light: #F8F9FA;
+    --light-gray: #BCBCBC;
+    --gray: #757575;
+    --gray-dark: #424242;
+    --black: #000000;
+    --primary-dark: #36393F;
+    --navbar-dark: #202225;
+    --navbar-dark-hover: #26292E;
+    --def-button: #2F3136;
+    --def-text: #ABABAB;
+    --def-button-hover: #33363C;
+    --def-text-hover: #BCBCBC;
+    --def-button-clicked: #393C42;
+    --context-menu: #18191C;
+
+    --primary: #007BFF;
+    --secondary: #9E9E9E;
+    --success: #28A745;
+    --info: #17A2B8;
+    --warning: #FFC107;
+    --danger: #ED4245;
+    --dark: #212121;
+
+    --d-blue: #64B5F6;
+    --d-indigo: #7986CB;
+    --d-purple: #9575CD;
+    --d-pink: #F06292;
+    --d-red: #E57373;
+    --d-orange: #FFB74D;
+    --d-yellow: #FFD54F;
+    --d-green: #81C784;
+    --d-teal: #80CBC4;
+    --d-cyan: #4DD0E1;
+
+    --nav-height: 22px;
+}
+
+/* Navbar */
+.navbar {
+    margin: 0;
+    max-height: var(--nav-height);
+    -webkit-app-region: drag;
+}
+
+.navbar.bg-dark {
+    background-color: var(--navbar-dark) !important;
+}
+
+.navbar .container-fluid {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.navbar .nav-item {
+    height: 100%;
+    max-height: var(--nav-height);
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-app-region: no-drag;
+}
+
+.navbar .icon {
+    width: var(--nav-height);
+    height: var(--nav-height);
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+#navMenu .icon {
+    background-image: url("../images/navbar/menu.png");
+    margin-left: 2px;
+}
+
+#navMenu:hover .icon {
+    background-image: url("../images/navbar/menu_hover.png");
+}
+
+#navMinimize .icon {
+    background-image: url("../images/navbar/minimize.png");
+}
+
+#navMinimize:hover .icon {
+    background-image: url("../images/navbar/minimize_hover.png");
+}
+
+#navMaximize .icon {
+    background-image: url("../images/navbar/maximize.png");
+}
+
+#navMaximize:hover .icon {
+    background-image: url("../images/navbar/maximize_hover.png");
+}
+
+#navMaximize.disabled .icon {
+    background-image: url("../images/navbar/maximize_disabled.png");
+    cursor: default;
+}
+
+#navMaximize.disabled:hover {
+    background-color: transparent;
+}
+
+#navMaximize.disabled:hover .icon {
+    background-image: url("../images/navbar/maximize_disabled.png");;
+}
+
+#navClose .icon {
+    background-image: url("../images/navbar/close.png");
+    margin-right: 2px;
+}
+
+#navClose:hover .icon {
+    background-image: url("../images/navbar/close_hover.png");
+}
+
+.navbar .nav-item p {
+    color: var(--greyple);
+}
+
+.navbar .nav-item:hover {
+    background-color: var(--navbar-dark-hover);
+}
+
+.navbar .nav-item:hover p {
+    color: var(--white);
+}
+
+#navClose:hover {
+    background-color: var(--danger);
+}
+/* End of Navbar */
+
+/* Context Menu */
+.context-menu {
+    position: absolute;
+    background-color: var(--context-menu);
+    user-select: none;
+    -webkit-user-select: none;
+    border-radius: 3px;
+    padding: 5px;
+    min-width: 150px;
+    z-index: 500;
+}
+
+.context-menu ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.context-menu li {
+    display: block;
+    padding: 5px 10px;
+    cursor: pointer;
+    color: var(--def-text);
+    font-size: 80%;
+    font-weight: 500;
+    border-radius: 2px;
+}
+
+.context-menu li:hover {
+    background-color: var(--blurple);
+    color: var(--white);
+}
+
+.context-menu .spacer {
+    cursor: default;
+    border-top: 1px solid var(--primary-dark);
+    padding: 0 10px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.context-menu .spacer:hover {
+    background-color: transparent;
+}
+
+.context-menu .disabled {
+    cursor: default;
+    color: var(--gray);
+}
+
+.context-menu .disabled:hover {
+    background-color: transparent;
+    color: var(--gray);
+}
+
+.context-menu .danger {
+    font-weight: 500;
+    color: var(--danger);
+}
+
+.context-menu .danger:hover {
+    color: var(--white);
+    background-color: var(--danger);
+}
+
+.context-menu .submenu-toggle::after {
+    display: inline-block;
+    float: right;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    content: "\f054";
+    text-align: right;
+}
+
+.submenu {
+    position: absolute;
+    display: none;
+}
+
+.submenu.active {
+    display: block;
+}
+
+.spacer {
+    border-top: 2px solid var(--def-button);
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+/* End of Context Menu */
+
+/* Number Spinnger */
+.number-input {
+    background-color: transparent;
+    border: none;
+    width: 100%;
+    text-align: center;
+    color: var(--def-text);
+    outline: none;
+}
+
+.number-input:disabled {
+    /*TODO*/
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.number-spinner {
+    position: relative;
+    border: 2px solid var(--primary-dark);
+    border-radius: 10px;
+    transition: all 300ms ease-in-out;
+}
+
+.number-spinner:hover {
+    border-color: var(--light);
+}
+
+.number-spinner:hover .number-input,
+.number-spinner:hover .spinner-element i {
+    color: var(--light);
+}
+
+.spinner-element {
+    position: absolute;
+    display: block;
+    font-size: 90%;
+    top: 3px;
+    cursor: pointer;
+}
+
+.spinner-element i {
+    color: var(--def-text);
+}
+
+.number-spinner .next {
+    right: 0.4rem;
+}
+
+.number-spinner .prev {
+    left: 0.4rem;
+}
+/* End of Number Spinner */
+
+body {
+    background-color: var(--primary-dark);
+}
+
+.form-range::-webkit-slider-runnable-track {
+    border-radius: 1em;
+    height: 8px;
+    background-color: #42484d;
+}
+
+.form-range:focus::-webkit-slider-thumb {
+    background-color: var(--blurple);
+}
+
+.form-range::-webkit-slider-thumb {
+    margin-top: -4px;
+    scale: 1.15;
+    background-color: var(--blurple);
+}
+
+.range-track {
+    content: '';
+    position: absolute;
+    border-radius: 1em;
+    top: 8px;
+    left: 0;
+    width: 0;
+    height: 8px;
+    background-color: var(--blurple);
+    pointer-events: none;
+}
+
+.range .thumb:after {
+    background: var(--blurple);
+}
