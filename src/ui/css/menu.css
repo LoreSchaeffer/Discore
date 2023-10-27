@@ -1,0 +1,43 @@
+#mainContainer {
+    display: flex;
+    flex-direction: column;
+    margin-top: calc(var(--nav-height) + var(--nav-margin));
+    padding-left: var(--window-margins);
+    padding-right: var(--window-margins);
+    padding-bottom: var(--window-margins);
+    height: calc(100vh - var(--nav-height) - var(--nav-margin));
+}
+
+.input-row .form-label {
+    min-width: fit-content;
+    margin-right: 10px;
+}
+
+.btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+#testAudio {
+    min-width: 36px;
+    margin-left: 10px;
+}
+
+#buttons {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
+    justify-self: flex-end;
+    margin-top: auto;
+}
+
+#buttons .btn {
+    margin-left: 8px;
+}

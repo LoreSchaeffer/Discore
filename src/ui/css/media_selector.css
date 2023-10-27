@@ -1,0 +1,133 @@
+#mainContainer {
+    margin-top: calc(var(--nav-height) + var(--nav-margin));
+    padding-left: var(--window-margins);
+    padding-right: var(--window-margins);
+    height: calc(100vh - var(--nav-height) - var(--nav-margin));
+}
+
+.btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+#inputRow {
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--primary-dark-light);
+}
+
+#openFile {
+    margin-left: 10px;
+}
+
+#searchContainer {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+}
+
+#searchBtn {
+    margin-left: 10px;
+}
+
+#results {
+    overflow-y: auto;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: calc(var(--window-margins) * -1);
+}
+
+#resultsPlaceholder {
+    color: var(--def-text);
+    margin-left: var(--window-margins);
+}
+
+.result {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: var(--window-margins);
+    transition: background-color 200ms ease-in-out;
+}
+
+.result:hover {
+    background-color: var(--primary-dark-light);
+    cursor: pointer;
+}
+
+.result.active {
+    background-color: var(--primary-dark-active);
+}
+
+.result .thumbnail {
+    min-width: 60px;
+    width: 60px;
+    height: 60px;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    border-radius: 10px;
+}
+
+.result .title-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    margin-left: 10px;
+}
+
+.result .title {
+    font-size: 14px;
+    line-height: 14px;
+    font-weight: 500;
+    margin: 0 0 8px 0;
+}
+
+.result .url {
+    font-size: 11px;
+    line-height: 11px;
+    font-weight: 400;
+    color: var(--def-text);
+    margin: 0;
+}
+
+.result .url:hover {
+    text-decoration: underline;
+}
+
+.result .duration {
+    font-size: 13px;
+    line-height: 13px;
+    font-weight: 400;
+    color: var(--def-text) !important;
+    align-self: center;
+    margin-left: auto;
+    margin-right: 10px;
+    margin-bottom: 0;
+    padding-left: 15px;
+}
+
+#buttons {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
+    justify-self: flex-end;
+    margin-top: auto;
+}
+
+#buttons .btn {
+    margin-left: 8px;
+}

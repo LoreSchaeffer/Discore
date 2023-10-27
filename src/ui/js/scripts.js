@@ -3,10 +3,13 @@ const navMinimize = $('#navMinimize');
 const navMaximize = $('#navMaximize');
 const navClose = $('#navClose');
 
-navMenu.click(() => window.electronAPI.menu());
-navMinimize.click(() => window.electronAPI.minimize());
-navMaximize.click(() => window.electronAPI.maximize());
-navClose.click(() => window.electronAPI.close());
+let winId = -1;
+let ctxMenu;
+
+navMenu.click(() => window.electronAPI.menu(winId));
+navMinimize.click(() => window.electronAPI.minimize(winId));
+navMaximize.click(() => window.electronAPI.maximize(winId));
+navClose.click(() => window.electronAPI.close(winId));
 
 $(document).click(() => {
     if (ctxMenu !== undefined) ctxMenu.remove();
@@ -17,6 +20,12 @@ $(document).contextmenu(() => {
 });
 
 $(document).ready(() => {
+    window.electronAPI.handleReady((event, id, hasParent, isResizable) => {
+        winId = id;
+        if (hasParent) navMinimize.remove();
+        if (!isResizable) navMaximize.remove();
+    });
+
     $('.range').each(function () {
         $(this).append('<div class="range-track"></div>');
         updateRangeTrack($(this).children('.form-range'));
@@ -83,4 +92,17 @@ function hideSubmenu(submenu, toggle) {
     setTimeout(function () {
         if (!submenu.is(':hover') && !toggle.is(':hover')) submenu.removeClass('active');
     }, 150);
+}
+
+function formatDuration(duration) {
+    const hours = Math.floor(duration / 3600);
+    const minutes = Math.floor(duration / 60) % 60;
+    const seconds = duration % 60;
+
+    let formatted = '';
+    if (hours > 0) formatted += hours + ':';
+    formatted += minutes.toString().padStart(2, '0') + ':';
+    formatted += seconds.toString().padStart(2, '0');
+
+    return formatted;
 }

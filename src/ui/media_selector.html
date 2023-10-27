@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>ESoundboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="libs/css/roboto.css"/>
+    <link rel="stylesheet" href="libs/mdb/css/mdb.dark.min.css">
+    <link rel="stylesheet" href="libs/fontawesome/css/fontawesome.min.css"/>
+    <link rel="stylesheet" href="libs/fontawesome/css/all.min.css"/>
+    <link rel="stylesheet" href="css/styles.css"/>
+    <link rel="stylesheet" href="css/media_selector.css"/>
+</head>
+<body>
+<nav class="navbar navbar-expand navbar-dark bg-dark fixed-top">
+    <div class="container-fluid" id="navbarSupportedContent">
+        <a id="navMenu" href="#">Discore</a>
+        <ul class="navbar-nav">
+            <li id="buttonTitle" class="nav-item nav-text"></li>
+        </ul>
+        <ul id="navRightGroup" class="navbar-nav">
+            <li id="navMinimize" class="nav-item"><i class="fa-solid fa-minus"></i></li>
+            <li id="navMaximize" class="nav-item"><i class="fa-regular fa-square"></i></li>
+            <li id="navClose" class="nav-item"><i class="fa-solid fa-xmark"></i></li>
+        </ul>
+    </div>
+</nav>
+<div id="mainContainer" class="container-fluid">
+    <div id="formContainer">
+        <div id="inputRow" class="input-row">
+            <div class="form-outline">
+                <input type="text" id="uri" class="form-control" />
+                <label class="form-label" for="uri">File or Url</label>
+            </div>
+            <a id="openFile" role="button" class="btn text-white" style="background-color: var(--primary);" href="#!"><i class="fa-solid fa-folder"></i></a>
+        </div>
+    </div>
+    <div id="searchContainer">
+        <div class="input-row">
+            <div class="form-outline">
+                <input type="text" id="search" class="form-control" />
+                <label class="form-label" for="search">Search</label>
+            </div>
+            <a id="searchBtn" role="button" class="btn text-white" style="background-color: var(--primary);" href="#!"><i class="fa-solid fa-search"></i></a>
+        </div>
+        <div id="results">
+            <p id="resultsPlaceholder">Perform a search to see the results ...</p>
+        </div>
+    </div>
+    <div id="buttons">
+        <a id="discard" role="button" class="btn text-white" style="background-color: var(--red);" href="#!"><i class="fa-solid fa-x"></i></a>
+        <a id="save" role="button" class="btn text-white" style="background-color: var(--green);" href="#!"><i class="fa-solid fa-save"></i></a>
+    </div>
+</div>
+
+<script src="libs/js/jquery-3.7.1.min.js"></script>
+<script src="libs/mdb/js/mdb.min.js"></script>
+<script src="js/scripts.js"></script>
+<script src="js/media_selector.js"></script>
+</body>
+</html>

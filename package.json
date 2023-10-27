@@ -19,7 +19,9 @@
   "license": "MIT",
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
-    "jquery": "^3.7.1"
+    "jquery": "^3.7.1",
+    "music-metadata": "^7.13.0",
+    "play-dl": "^1.9.7"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.4.2",

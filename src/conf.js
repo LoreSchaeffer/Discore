@@ -29,17 +29,47 @@ const Conf = class {
 
         if (!fs.existsSync(this.buttonsPath)) {
             try {
-                fs.writeFileSync(this.buttonsPath, JSON.stringify({buttons: []}, null, 2));
+                fs.writeFileSync(this.buttonsPath, JSON.stringify([], null, 2));
             } catch (e) {
                 return e;
             }
         } else {
             try {
-                this.buttons = JSON.parse(fs.readFileSync(this.buttonsPath)).buttons;
+                this.buttons = JSON.parse(fs.readFileSync(this.buttonsPath));
             } catch (e) {
                 return e;
             }
         }
+    }
+
+    getButton(row, col) {
+        return this.buttons.find((btn) => btn.row === row && btn.col === col);
+    }
+
+    addButton(button) {
+        try {
+            const index = this.buttons.findIndex((btn) => btn.row === button.row && btn.col === button.col);
+            if (index !== -1) this.buttons[index] = button;
+            else this.buttons.push(button);
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    removeButton(row, col) {
+        try {
+            const index = this.buttons.findIndex((btn) => btn.row === row && btn.col === col);
+            if (index !== -1) this.buttons.splice(index, 1);
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    getSettings() {
+        if (this.config.settings) return this.config.settings;
+        else return {
+            "output_device": ""
+        };
     }
 
     saveConfig() {

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>ESoundboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="libs/css/roboto.css"/>
+    <link rel="stylesheet" href="libs/mdb/css/mdb.dark.min.css">
+    <link rel="stylesheet" href="libs/fontawesome/css/fontawesome.min.css"/>
+    <link rel="stylesheet" href="libs/fontawesome/css/all.min.css"/>
+    <link rel="stylesheet" href="css/styles.css"/>
+    <link rel="stylesheet" href="css/menu.css"/>
+</head>
+<body>
+<nav class="navbar navbar-expand navbar-dark bg-dark fixed-top">
+    <div class="container-fluid" id="navbarSupportedContent">
+        <a id="navMenu" href="#">Discore</a>
+        <ul id="navRightGroup" class="navbar-nav">
+            <li id="navMinimize" class="nav-item"><i class="fa-solid fa-minus"></i></li>
+            <li id="navMaximize" class="nav-item"><i class="fa-regular fa-square"></i></li>
+            <li id="navClose" class="nav-item"><i class="fa-solid fa-xmark"></i></li>
+        </ul>
+    </div>
+</nav>
+<div id="mainContainer" class="container-fluid">
+    <div class="input-row">
+        <label for="audioOutput" class="form-label">Output Device</label>
+        <select id="audioOutput" class="form-select"></select>
+        <a id="testAudio" role="button" class="btn text-white" style="background-color: var(--primary);" href="#!"><i class="fa-solid fa-play"></i></a>
+    </div>
+    <div id="buttons">
+        <a id="discard" role="button" class="btn text-white" style="background-color: var(--red);" href="#!"><i class="fa-solid fa-x"></i></a>
+        <a id="save" role="button" class="btn text-white" style="background-color: var(--green);" href="#!"><i class="fa-solid fa-save"></i></a>
+    </div>
+</div>
+
+<script src="libs/js/jquery-3.7.1.min.js"></script>
+<script src="libs/mdb/js/mdb.min.js"></script>
+<script src="js/scripts.js"></script>
+<script src="js/menu.js"></script>
+</body>
+</html>
