@@ -3,6 +3,7 @@ const Player = class {
         this.eventHandlers = {};
         this.audio = new Audio();
         this.currentTrack = null;
+        this.endTime = null;
         this.isPlaying = false;
 
         this.audio.addEventListener('timeupdate', this.timeupdate.bind(this));
@@ -12,9 +13,10 @@ const Player = class {
         });
     }
 
-    async play(track) {
+    async play(track, startTime, endTime) {
         if (this.currentTrack != null) this.stop();
         this.currentTrack = track;
+        this.endTime = endTime;
         let src;
 
         if (track.uri.startsWith('https')) {
@@ -25,7 +27,8 @@ const Player = class {
 
         this.audio.src = src;
         this.audio.load();
-        await this.audio.play();
+        if (startTime) this.audio.currentTime = startTime / 1000;
+        return this.audio.play();
     }
 
     stop() {
@@ -34,6 +37,7 @@ const Player = class {
 
         this.isPlaying = false;
         this.currentTrack = null;
+        this.endTime = null;
 
         this.dispatchEvent('stop');
     }
@@ -73,7 +77,8 @@ const Player = class {
         this.dispatchEvent('timeupdate', currentTime);
 
         if (this.currentTrack == null) return;
-        if (currentTime === this.currentTrack.duration) this.stop();
+        if (currentTime >= this.currentTrack.duration) this.stop();
+        if (this.audio.currentTime * 1000 >= this.endTime) this.stop();
     }
 
     addEventListener(eventName, handler) {

@@ -83,12 +83,23 @@ function fillSoundboard() {
 
 function fillButton(button) {
     const btnElement = $(`#btn-${button.row}-${button.col}`);
-    if (button.background_color !== '') btnElement.css('background-color', button.background_color);
-    if (button.border_color !== '') btnElement.css('border-color', button.border_color);
-
     const btnText = btnElement.find('.sb-btn-title');
+
     btnText.text(button.title);
-    if (button.text_color !== '') btnText.css('color', button.text_color);
+
+    btnElement.css('background-color', button.background_color ? button.background_color : 'var(--def-button)');
+    btnElement.css('border-color', button.border_color ? button.border_color : 'transparent');
+    btnText.css('color', button.text_color ? button.text_color : 'var(--def-text');
+
+    btnElement.hover(() => {
+        btnElement.css('background-color', button.background_hover_color ? button.background_hover_color : 'var(--def-button-hover)');
+        btnElement.css('color', button.text_hover_color ? button.text_hover_color : 'var(--def-text-hover');
+        btnElement.css('border-color', button.border_hover_color ? button.border_hover_color : 'transparent');
+    }, () => {
+        btnElement.css('background-color', button.background_color ? button.background_color : 'var(--def-button)');
+        btnElement.css('border-color', button.border_color ? button.border_color : 'transparent');
+        btnText.css('color', button.text_color ? button.text_color : 'var(--def-text');
+    });
 }
 
 async function sbLeftClick() {
@@ -107,7 +118,31 @@ async function sbLeftClick() {
         }
     }
 
-    player.play(button.track);
+    let startTime = button.start_time;
+    if (startTime) {
+        if (button.start_time_unit === 's') startTime *= 1000;
+        else if (button.start_time === 'm') startTime *= 60000;
+    }
+
+    let endTime = button.end_time;
+    if (endTime) {
+        if (button.end_time_unit === 's') endTime *= 1000;
+        else if (button.end_time === 'm') endTime *= 60000;
+
+        if (button.end_type === 'after') endTime = startTime + endTime;
+    }
+
+    player.play(button.track, startTime, endTime).catch((e) => {
+        if (button.track.uri.startsWith('https')) {
+            const newUrl = window.electronAPI.getNewUrl(row, col);
+            if (newUrl) {
+                button.track.url = newUrl;
+                player.play(button.track).catch((e) => {
+                    console.log('Failed to get a new url');
+                });
+            }
+        }
+    });
 }
 
 function getButton(row, col) {
@@ -149,11 +184,11 @@ function sbRightClick(e) {
 }
 
 function ctxChooseFile(row, col) {
-    window.electronAPI.openMediaSelector(row, col);
+    window.electronAPI.openMediaSelector(row, col, winId);
 }
 
 function ctxSettings(row, col) {
-    console.log("Settings button " + row + " . " + col);
+    window.electronAPI.openButtonSettings(row, col);
 }
 
 function ctxClear(row, col) {
@@ -165,6 +200,8 @@ function ctxClear(row, col) {
     const btnText = btn.find('.sb-btn-title');
     btnText.text(`Button ${row + 1} . ${col + 1}`);
     btnText.css('color', '');
+
+    buttons = buttons.filter((btn) => btn.row !== row && btn.col !== col);
 }
 
 playPauseBtn.click(() => {
@@ -212,7 +249,7 @@ function onPlay(track) {
 
     trackName.text(track.title);
 
-    if (track.thumbnail != null) thumbnail.css('background-image', `url(${track.thumbnail})`);
+    if (track.thumbnail) thumbnail.css('background-image', `url(${track.thumbnail})`);
     thumbnail.css('opacity', 1);
 
     setPauseButton();

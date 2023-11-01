@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     handleRC: (callback) => ipcRenderer.on('rc', callback),
     handleButtonUpdate: (callback) => ipcRenderer.on('button_update', callback),
     handleOutputDevice: (callback) => ipcRenderer.on('output_device', callback),
+    handleButton: (callback) => ipcRenderer.on('button', callback),
 
     menu: (winId) => ipcRenderer.send('menu', winId),
     minimize: (winId) => ipcRenderer.send('minimize', winId),
@@ -15,7 +16,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getVolume: () => ipcRenderer.invoke('get_volume'),
     setVolume: (volume) => ipcRenderer.send('set_volume', volume),
     getButtons: () => ipcRenderer.invoke('get_buttons'),
-    openMediaSelector: (row, col) => ipcRenderer.send('open_media_selector', row, col),
+    openMediaSelector: (row, col, winId) => ipcRenderer.send('open_media_selector', row, col, winId),
     search: (query) => ipcRenderer.invoke('search', query),
     openUrl: (url) => ipcRenderer.send('open_url', url),
     openMediaDialog: () => ipcRenderer.invoke('open_media_dialog'),
@@ -24,4 +25,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     saveSettings: (winId, settings) => ipcRenderer.send('save_settings', winId, settings),
     getNewUrl: (row, col) => ipcRenderer.invoke('get_new_url', row, col),
     getOutputDevice: () => ipcRenderer.invoke('get_output_device'),
+    openButtonSettings: (row, col) =>  ipcRenderer.send('open_button_settings', row, col),
+    updateButton: (winId, button) => ipcRenderer.send('update_button', winId, button),
 })

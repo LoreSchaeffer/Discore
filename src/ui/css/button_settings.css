@@ -1,0 +1,191 @@
+#mainContainer {
+    margin-top: calc(var(--nav-height) + var(--nav-margin));
+    padding-left: var(--window-margins);
+    padding-right: var(--window-margins);
+    height: calc(100vh - var(--nav-height) - var(--nav-margin));
+}
+
+.btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+#inputRow {
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--primary-dark-light);
+}
+
+#openMediaSelector {
+    margin-left: 10px;
+}
+
+#buttonSettings {
+    padding-top: 20px;
+}
+
+#buttonSettings .form-outline {
+    margin-bottom: 10px;
+}
+
+#styleContainer {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--primary-dark-light);
+}
+
+input[type="color"] {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    margin: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: 2px solid transparent;
+    border-radius: 6px;
+    transition: border-color 200ms ease-in-out;
+}
+
+input[type="color"]::-webkit-color-swatch:hover {
+    border-color: var(--blurple);
+}
+
+#styleSettings {
+    width: 50%;
+}
+
+.form-color {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.form-color .form-label {
+    margin: 0;
+    padding: 0;
+}
+
+.input-reset {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.reset {
+    width: fit-content;
+    height: fit-content;
+    line-height: 0;
+    margin-left: 3px;
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 50%;
+}
+
+.reset i {
+    color: var(--def-text);
+    transition: color 100ms ease-in-out;
+}
+
+.reset:hover i {
+    color: var(--white);
+}
+
+#stylePreview {
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#preview {
+    width: 150px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--def-button);
+    color: var(--def-text);
+    font-weight: 400;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 100ms ease-in-out;
+    border: 1px solid transparent;
+}
+
+#preview:hover {
+    background-color: var(--def-button-hover);
+    color: var(--def-text-hover);
+}
+
+#timeContainer {
+    padding-top: 20px;
+}
+
+.number-spinner {
+    height: 41px;
+    max-width: 30%;
+    border: 2px solid var(--primary-dark-light);
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+}
+
+.number-spinner .spinner-element {
+    top: 7px;
+}
+
+.number-spinner:hover {
+    border: 2px solid var(--primary-dark-light);
+}
+
+.number-spinner:hover .number-input,
+.number-spinner:hover .spinner-element i {
+    color: var(--def-text);
+}
+
+.form-select {
+    width: 30%;
+}
+
+#timeContainer .input-row {
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+#timeContainer label {
+    margin-bottom: 0;
+}
+
+#endTimeType {
+    width: 18%;
+}
+
+#buttons {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
+    justify-self: flex-end;
+    margin-top: auto;
+}
+
+#buttons .btn {
+    margin-left: 8px;
+}

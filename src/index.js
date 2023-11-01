@@ -10,6 +10,8 @@ const CONFIG = new Conf("conf");
 const windows = {};
 let mainWindow;
 
+//TODO Manage media buttons
+
 if (require('electron-squirrel-startup')) {
     app.quit();
 }
@@ -67,7 +69,7 @@ app.on('activate', () => {
 ipcMain.on('menu', (event, winId) => {
     if (winId !== -1) return;
 
-    openModal(mainWindow, 600, 500, false, 'menu.html');
+    openModal(mainWindow, 600, 200, false, 'menu.html');
 });
 
 ipcMain.on('minimize', (event, winId) => {
@@ -104,8 +106,8 @@ ipcMain.on('close', (event, winId) => {
     }
 });
 
-ipcMain.on('open_media_selector', (event, row, col) => {
-    openModal(mainWindow, 500, 600, false, 'media_selector.html', (modal) => {
+ipcMain.on('open_media_selector', (event, row, col, winId) => {
+    openModal(windows[winId], 500, 600, false, 'media_selector.html', (modal) => {
         modal.webContents.send('rc', row, col);
     });
 });
@@ -170,6 +172,9 @@ ipcMain.on('set_button', async (event, winId, row, col, uri, track) => {
         return;
     }
 
+    windows[winId].close();
+    delete windows[winId];
+
     if (track != null) {
         try {
             const stream = await play.stream(track.uri);
@@ -203,14 +208,8 @@ ipcMain.on('set_button', async (event, winId, row, col, uri, track) => {
         row: row,
         col: col,
         title: track.title,
-        background_color: '',
-        text_color: '',
-        border_color: '',
         track: track
     };
-
-    windows[winId].close();
-    delete windows[winId];
 
     CONFIG.addButton(button);
     CONFIG.saveButtons();
@@ -251,6 +250,23 @@ ipcMain.handle('get_new_url', async (event, row, col) => {
 
 ipcMain.handle('get_output_device', () => {
     return CONFIG.config.settings.output_device != null ? CONFIG.config.settings.output_device : 'default';
+});
+
+ipcMain.on('open_button_settings', (event, row, col) => {
+    openModal(mainWindow, 500, 600, false, 'button_settings.html', (modal) => {
+        modal.webContents.send('rc', row, col);
+        modal.webContents.send('button', CONFIG.getButton(row, col));
+    });
+});
+
+ipcMain.on('update_button', (event, winId, button) => {
+    windows[winId].close();
+    delete windows[winId];
+
+    CONFIG.addButton(button);
+    CONFIG.saveButtons();
+
+    mainWindow.webContents.send('button_update', button);
 });
 
 function initSettings() {

@@ -22,6 +22,11 @@ const Conf = class {
         } else {
             try {
                 this.config = JSON.parse(fs.readFileSync(this.configPath));
+
+                if (!this.config.settings) {
+                    this.config.settings = DEF_CONFIG.settings;
+                    this.saveConfig();
+                }
             } catch (e) {
                 return e;
             }
@@ -94,7 +99,10 @@ const DEF_CONFIG = {
     height: 768,
     rows: 8,
     columns: 10,
-    volume: 100
+    volume: 100,
+    settings: {
+        output_device: "default"
+    }
 }
 
 module.exports = Conf;
