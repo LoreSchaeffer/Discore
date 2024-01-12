@@ -27,9 +27,13 @@
     border: 1px solid transparent;
 }
 
-.sb-btn:hover {
+.sb-btn:not(.dropping):hover {
     background-color: var(--def-button-hover);
     color: var(--def-text-hover);
+}
+
+.sb-btn.dropping {
+    filter: brightness(150%);
 }
 
 #player {

@@ -1,4 +1,5 @@
 const {app, BrowserWindow, ipcMain, shell, dialog} = require('electron');
+const {video_basic_info} = require('play-dl');
 const path = require('path');
 const play = require('play-dl');
 const mm = require('music-metadata');
@@ -23,7 +24,7 @@ const startApp = () => {
         icon: 'icon.png',
         width: CONFIG.config.width,
         height: CONFIG.config.height,
-        minWidth: 1280,
+        minWidth: 1080,
         minHeight: 720,
         frame: false,
         autoHideMenuBar: true,
@@ -190,15 +191,23 @@ ipcMain.on('set_button', async (event, winId, row, col, uri, track) => {
             thumbnail: ''
         }
 
-        try {
-            const meta = await mm.parseFile(uri);
-            if (meta != null) {
-                if (meta.common.title != null) track.title = meta.common.title;
-                else track.title = path.basename(uri);
-                track.duration = Math.round(meta.format.duration);
+        if (isYouTubeUrl(uri)) {
+            const info = await video_basic_info(uri);
+            track.title = info.video_details.title;
+            track.uri = uri;
+            track.duration = info.video_details.durationInSec;
+            track.thumbnail = info.video_details.thumbnails[0].url;
+        } else {
+            try {
+                const meta = await mm.parseFile(uri);
+                if (meta != null) {
+                    if (meta.common.title != null) track.title = meta.common.title;
+                    else track.title = path.basename(uri);
+                    track.duration = Math.round(meta.format.duration);
+                }
+            } catch (e) {
+                console.log(e);
             }
-        } catch (e) {
-            console.log(e);
         }
     }
 
@@ -215,6 +224,30 @@ ipcMain.on('set_button', async (event, winId, row, col, uri, track) => {
     CONFIG.saveButtons();
 
     mainWindow.webContents.send('button_update', button);
+});
+
+ipcMain.on('swap_buttons', async (event, row1, col1, row2, col2) => {
+    const button1 = CONFIG.getButton(row1, col1);
+    const button2 = CONFIG.getButton(row2, col2);
+
+    CONFIG.removeButton(row1, col1);
+    CONFIG.removeButton(row2, col2);
+
+    if (button1 != null) {
+        button1.row = row2;
+        button1.col = col2;
+        CONFIG.addButton(button1);
+    }
+
+    if (button2 != null) {
+        button2.row = row1;
+        button2.col = col1;
+        CONFIG.addButton(button2);
+    }
+
+    CONFIG.saveButtons();
+
+    mainWindow.webContents.send('button_swap', button1, button2, row1, col1, row2, col2);
 });
 
 ipcMain.handle('get_settings', () => {
@@ -318,4 +351,9 @@ function generateWindowId() {
     }
 
     throw new Error('Too many windows');
+}
+
+function isYouTubeUrl(url) {
+    const pattern = /^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+/;
+    return pattern.test(url);
 }

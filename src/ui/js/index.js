@@ -13,6 +13,8 @@ let rows = 0;
 let cols = 0;
 let player;
 let progressRangeMD = false;
+let isDragging = false;
+let dragSuccess = null;
 
 $(document).ready(() => {
     player = new Player();
@@ -41,11 +43,52 @@ $(document).ready(() => {
     });
 });
 
+$(document).on('wheel', (e) => {
+    if (e.originalEvent.ctrlKey) {
+        const buttons = $('.sb-btn');
+
+        let size = parseInt(buttons.css('font-size'));
+        if (e.originalEvent.deltaY < 0) size++;
+        else size--;
+
+        buttons.css('font-size', size + 'px');
+    }
+});
+
 window.electronAPI.handleButtonUpdate((event, button) => {
     const index = buttons.findIndex((btn) => btn.row === button.row && btn.col === button.col);
     if (index !== -1) buttons[index] = button;
     else buttons.push(button);
     fillButton(button);
+});
+
+window.electronAPI.handleButtonSwap((event, button1, button2, row1, col1, row2, col2) => {
+    const index1 = buttons.findIndex((btn) => btn.row === row1 && btn.col === col1);
+    const index2 = buttons.findIndex((btn) => btn.row === row2 && btn.col === col2);
+
+    if (index1 !== -1) {
+        buttons.splice(index1, 1);
+    }
+
+    if (index2 !== -1) {
+        buttons.splice(index2, 1);
+    }
+
+    if (button1 != null) {
+        buttons.push(button1);
+        fillButton(button1);
+    } else {
+        resetButton(row2, col2);
+    }
+
+    if (button2 != null) {
+        buttons.push(button2);
+        fillButton(button2);
+    } else {
+        resetButton(row1, col1);
+    }
+
+    isDragging = false;
 });
 
 window.electronAPI.handleOutputDevice((event, deviceId) => {
@@ -79,6 +122,59 @@ function fillSoundboard() {
         buttons = btns;
         buttons.forEach(fillButton);
     });
+
+    $('.sb-btn').draggable({
+        scroll: false,
+        revert: true,
+        revertDuration: 0,
+        snap: true,
+        snapMode: 'inner',
+        snapTolerance: 10,
+        stack: '.sb-btn',
+        start: function() {
+            isDragging = true;
+            dragSuccess = false;
+        },
+        stop: function(event, ui) {
+            if (!dragSuccess) isDragging = false;
+            dragSuccess = null;
+        }
+    }).droppable({
+        accept: '.sb-btn',
+        hoverClass: 'dropping',
+        tolerance: 'pointer',
+        drop: function(e, ui) {
+            dragSuccess = true;
+
+            const draggable = ui.draggable;
+            const draggableRow = parseInt(draggable.attr('data-row'));
+            const draggableCol = parseInt(draggable.attr('data-col'));
+            const draggableButton = getButton(draggableRow, draggableCol);
+
+            const droppable = $(this);
+            const droppableRow = parseInt(droppable.attr('data-row'));
+            const droppableCol = parseInt(droppable.attr('data-col'));
+            const droppableButton = getButton(droppableRow, droppableCol);
+
+            if (draggableButton == null && droppableButton == null) {
+                return;
+            } else if (draggableButton == null && droppableButton != null) {
+                droppableButton.row = draggableRow;
+                droppableButton.col = draggableCol;
+            } else if (draggableButton != null && droppableButton == null) {
+                draggableButton.row = droppableRow;
+                draggableButton.col = droppableCol;
+            } else if (draggableButton != null && droppableButton != null) {
+                draggableButton.row = droppableRow;
+                draggableButton.col = droppableCol;
+
+                droppableButton.row = draggableRow;
+                droppableButton.col = draggableCol;
+            }
+
+            window.electronAPI.swapButtons(draggableRow, draggableCol, droppableRow, droppableCol);
+        }
+    });
 }
 
 function fillButton(button) {
@@ -89,23 +185,36 @@ function fillButton(button) {
 
     btnElement.css('background-color', button.background_color ? button.background_color : 'var(--def-button)');
     btnElement.css('border-color', button.border_color ? button.border_color : 'transparent');
-    btnText.css('color', button.text_color ? button.text_color : 'var(--def-text');
+    btnText.css('color', button.text_color ? button.text_color : 'var(--def-text)');
 
     btnElement.hover(() => {
         btnElement.css('background-color', button.background_hover_color ? button.background_hover_color : 'var(--def-button-hover)');
-        btnElement.css('color', button.text_hover_color ? button.text_hover_color : 'var(--def-text-hover');
+        btnElement.css('color', button.text_hover_color ? button.text_hover_color : 'var(--def-text-hover)');
         btnElement.css('border-color', button.border_hover_color ? button.border_hover_color : 'transparent');
     }, () => {
         btnElement.css('background-color', button.background_color ? button.background_color : 'var(--def-button)');
         btnElement.css('border-color', button.border_color ? button.border_color : 'transparent');
-        btnText.css('color', button.text_color ? button.text_color : 'var(--def-text');
+        btnText.css('color', button.text_color ? button.text_color : 'var(--def-text)');
     });
+}
+
+function resetButton(row, col) {
+    const btnElement = $(`#btn-${row}-${col}`);
+    const btnText = btnElement.find('.sb-btn-title');
+
+    btnText.text(`Button ${row + 1} . ${col + 1}`);
+
+    btnElement.css('background-color', '');
+    btnElement.css('border-color', '');
+    btnText.css('color', '');
 }
 
 async function sbLeftClick() {
     const btn = $(this);
     const row = parseInt(btn.attr('data-row'));
     const col = parseInt(btn.attr('data-col'));
+
+    if (isDragging) return;
 
     const button = getButton(row, col);
     if (button == null) return;
@@ -115,6 +224,7 @@ async function sbLeftClick() {
     if (track.uri.startsWith('https')) {
         if (track.url == null) {
             button.track.url = await window.electronAPI.getNewUrl(row, col);
+            if (button.track.url == null) return;
         }
     }
 
@@ -132,9 +242,9 @@ async function sbLeftClick() {
         if (button.end_type === 'after') endTime = startTime + endTime;
     }
 
-    player.play(button.track, startTime, endTime).catch((e) => {
+    player.play(button.track, startTime, endTime).catch(async (e) => {
         if (button.track.uri.startsWith('https')) {
-            const newUrl = window.electronAPI.getNewUrl(row, col);
+            const newUrl = await window.electronAPI.getNewUrl(row, col);
             if (newUrl) {
                 button.track.url = newUrl;
                 player.play(button.track).catch((e) => {
