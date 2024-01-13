@@ -15,6 +15,7 @@ let player;
 let progressRangeMD = false;
 let isDragging = false;
 let dragSuccess = null;
+let copiedStyle = null;
 
 $(document).ready(() => {
     player = new Player();
@@ -131,11 +132,11 @@ function fillSoundboard() {
         snapMode: 'inner',
         snapTolerance: 10,
         stack: '.sb-btn',
-        start: function() {
+        start: function () {
             isDragging = true;
             dragSuccess = false;
         },
-        stop: function(event, ui) {
+        stop: function (event, ui) {
             if (!dragSuccess) isDragging = false;
             dragSuccess = null;
         }
@@ -143,7 +144,7 @@ function fillSoundboard() {
         accept: '.sb-btn',
         hoverClass: 'dropping',
         tolerance: 'pointer',
-        drop: function(e, ui) {
+        drop: function (e, ui) {
             dragSuccess = true;
 
             const draggable = ui.draggable;
@@ -274,6 +275,9 @@ function sbRightClick(e) {
         $('<li id="bsCtxChooseFile">Choose File</li>'),
         $('<li id="bsCtxSettings">Settings</li>'),
         $('<li class="spacer"></li>'),
+        $('<li id="bsCtxCopyStyle">Copy Style</li>'),
+        $('<li id="bsCtxPasteStyle">Paste Style</li>'),
+        $('<li class="spacer"></li>'),
         $('<li id="bsCtxClear" class="danger">Clear</li>')
     ];
 
@@ -286,10 +290,16 @@ function sbRightClick(e) {
 
     $('body').append(menu);
 
+    if (copiedStyle == null) {
+        $('#bsCtxPasteStyle').addClass('disabled');
+    }
+
     ctxMenu = menu;
 
     $("#bsCtxChooseFile").click(() => ctxChooseFile(row, col));
     $("#bsCtxSettings").click(() => ctxSettings(row, col));
+    $("#bsCtxCopyStyle").click(() => ctxCopyStyle(row, col));
+    $("#bsCtxPasteStyle").click(() => ctxPasteStyle(row, col));
     $("#bsCtxClear").click(() => ctxClear(row, col));
 }
 
@@ -299,6 +309,35 @@ function ctxChooseFile(row, col) {
 
 function ctxSettings(row, col) {
     window.electronAPI.openButtonSettings(row, col);
+}
+
+function ctxCopyStyle(row, col) {
+    const button = getButton(row, col);
+    if (button == null) return;
+
+    copiedStyle = {
+        background_color: button.background_color,
+        border_color: button.border_color,
+        text_color: button.text_color,
+        background_hover_color: button.background_hover_color,
+        border_hover_color: button.border_hover_color,
+        text_hover_color: button.text_hover_color
+    };
+}
+
+function ctxPasteStyle(row, col) {
+    const button = getButton(row, col);
+    if (button == null) return;
+    if (copiedStyle == null) return;
+
+    button.background_color = copiedStyle.background_color;
+    button.border_color = copiedStyle.border_color;
+    button.text_color = copiedStyle.text_color;
+    button.background_hover_color = copiedStyle.background_hover_color;
+    button.border_hover_color = copiedStyle.border_hover_color;
+    button.text_hover_color = copiedStyle.text_hover_color;
+
+    window.electronAPI.updateButton(null, button);
 }
 
 function ctxClear(row, col) {

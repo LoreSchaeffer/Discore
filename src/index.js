@@ -293,8 +293,10 @@ ipcMain.on('open_button_settings', (event, row, col) => {
 });
 
 ipcMain.on('update_button', (event, winId, button) => {
-    windows[winId].close();
-    delete windows[winId];
+    if (winId != null) {
+        windows[winId].close();
+        delete windows[winId];
+    }
 
     CONFIG.addButton(button);
     CONFIG.saveButtons();
