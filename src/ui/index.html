@@ -12,16 +12,6 @@
     <link rel="stylesheet" href="css/index.css"/>
 </head>
 <body>
-<nav class="navbar navbar-expand navbar-dark bg-dark fixed-top">
-    <div class="container-fluid" id="navbarSupportedContent">
-        <a id="navMenu" href="#">Discore</a>
-        <ul id="navRightGroup" class="navbar-nav">
-            <li id="navMinimize" class="nav-item"><i class="fa-solid fa-minus"></i></li>
-            <li id="navMaximize" class="nav-item"><i class="fa-regular fa-square"></i></li>
-            <li id="navClose" class="nav-item"><i class="fa-solid fa-xmark"></i></li>
-        </ul>
-    </div>
-</nav>
 <div id="mainContainer" class="container-fluid">
     <div id="soundboard"></div>
     <div id="player" class="container-fluid fixed-bottom">
@@ -29,6 +19,7 @@
         <div id="leftBtnGroup" class="btns-group">
             <a id="playPause" role="button" class="btn text-white btn-player btn-disabled" style="background-color: var(--green);" href="#"><i class="fa-solid fa-play"></i></a>
             <a id="stop" role="button" class="btn text-white btn-player btn-disabled" style="background-color: var(--red);" href="#"><i class="fa-solid fa-stop"></i></a>
+            <a id="playNow" role="button" class="btn text-white btn-player" style="background-color: var(--blurple);" href="#"><i class="fa-regular fa-circle-play"></i></a>
         </div>
         <div id="seekBarsContainer">
             <label class="form-label" for="volume">Volume</label>

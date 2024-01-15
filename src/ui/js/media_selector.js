@@ -13,7 +13,12 @@ window.electronAPI.handleRC((event, r, c) => {
     row = r;
     col = c;
 
-    $('#buttonTitle').text('Button ' + (row + 1) + ' . ' + (col + 1));
+    if (r != null && c != null) {
+        $('#buttonTitle').text('Button ' + (row + 1) + ' . ' + (col + 1));
+    } else {
+        $('#buttonTitle').text('Play now');
+        saveBtn.find('i').removeClass('fa-save').addClass('fa-play');
+    }
 });
 
 $(document).ready(() => {
@@ -70,7 +75,11 @@ saveBtn.click(() => {
         };
     }
 
-    window.electronAPI.setButton(winId, row, col, uriField.val(), track);
+    if (row != null && col != null) {
+        window.electronAPI.setButton(winId, row, col, uriField.val(), track);
+    } else {
+        window.electronAPI.playNow(winId, uriField.val(), track);
+    }
 });
 
 function search() {

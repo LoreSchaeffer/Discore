@@ -9,6 +9,7 @@ const Player = class {
         this.audio.addEventListener('timeupdate', this.timeupdate.bind(this));
         this.audio.addEventListener('play', () => {
             this.isPlaying = true;
+
             this.dispatchEvent('play', this.currentTrack);
         });
     }
@@ -50,12 +51,14 @@ const Player = class {
     pause() {
         this.audio.pause();
         this.isPlaying = false;
+
         this.dispatchEvent('pause');
     }
 
     resume() {
         this.audio.play().then(() => {
             this.isPlaying = true;
+
             this.dispatchEvent('resume');
         });
     }

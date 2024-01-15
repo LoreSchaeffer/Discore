@@ -14,7 +14,7 @@
 .sb-btn {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     background-color: var(--def-button);
     color: var(--def-text);
     font-weight: 400;
@@ -34,6 +34,31 @@
 
 .sb-btn.dropping {
     filter: brightness(150%);
+}
+
+.sb-btn-img {
+    min-width: 35px;
+    width: 35px;
+    height: 35px;
+    border-radius: 5px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin-left: 5px;
+    margin-right: 8px;
+}
+
+.sb-btn span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    max-width: 100%;
+    margin-right: 5px;
+    font-size: 15px;
+    line-height: 15px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
 }
 
 #player {

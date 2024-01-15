@@ -1,6 +1,7 @@
 const thumbnail = $('#thumbnail');
 const playPauseBtn = $('#playPause');
 const stopBtn = $('#stop');
+const playNowBtn = $('#playNow');
 const volumeRange = $('#volume');
 const progressRange = $('#progress');
 const progressThumb = progressRange.parent().find('.thumb .thumb-value');
@@ -53,6 +54,7 @@ $(document).on('wheel', (e) => {
         else size--;
 
         buttons.css('font-size', size + 'px');
+        buttons.css('line-height', size + 'px');
     }
 });
 
@@ -96,6 +98,14 @@ window.electronAPI.handleOutputDevice((event, deviceId) => {
     player.setOutputDevice(deviceId);
 });
 
+window.electronAPI.handlePlayNow(async (event, track) => {
+    if (track.uri.startsWith('https')) {
+        if (track.url == null) return;
+    }
+
+    player.play(track, null, track.duration * 1000);
+});
+
 function createSoundboard() {
     const soundboard = $('#soundboard');
     soundboard.empty();
@@ -106,7 +116,11 @@ function createSoundboard() {
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
             const btn = $(`<div id="btn-${row}-${col}" class="sb-btn" data-row="${row}" data-col="${col}"></div>`);
+            btn.append($(`<div class="sb-btn-img">`));
             btn.append($(`<span class="sb-btn-title">Button ${row + 1} . ${col + 1}</span>`));
+
+            btn.find('.sb-btn-img').css('background-image', 'url("images/track.png")');
+
             soundboard.append(btn);
         }
     }
@@ -181,8 +195,11 @@ function fillSoundboard() {
 function fillButton(button) {
     const btnElement = $(`#btn-${button.row}-${button.col}`);
     const btnText = btnElement.find('.sb-btn-title');
+    let btnImage = btnElement.find('.sb-btn-img');
 
     btnText.text(button.title);
+
+    btnImage.css('background-image', button.track.thumbnail ? `url(${button.track.thumbnail})` : 'url("images/track.png")');
 
     btnElement.css('background-color', button.background_color ? button.background_color : 'var(--def-button)');
     btnElement.css('border-color', button.border_color ? button.border_color : 'transparent');
@@ -261,46 +278,44 @@ function getButton(row, col) {
 }
 
 function sbRightClick(e) {
-    if (ctxMenu !== undefined) ctxMenu.remove();
     e.stopImmediatePropagation();
 
     const btn = $(this);
     const row = parseInt(btn.attr('data-row'));
     const col = parseInt(btn.attr('data-col'));
 
-    const menu = $('<div class="context-menu" data-row></div>');
-    const itemContainer = $('<ul></ul>');
-
     const items = [
-        $('<li id="bsCtxChooseFile">Choose File</li>'),
-        $('<li id="bsCtxSettings">Settings</li>'),
-        $('<li class="spacer"></li>'),
-        $('<li id="bsCtxCopyStyle">Copy Style</li>'),
-        $('<li id="bsCtxPasteStyle">Paste Style</li>'),
-        $('<li class="spacer"></li>'),
-        $('<li id="bsCtxClear" class="danger">Clear</li>')
+        {
+            text: 'Choose File',
+            callback: () => ctxChooseFile(row, col)
+        },
+        {
+            text: 'Settings',
+            callback: () => ctxSettings(row, col)
+        },
+        {
+            classes: ['spacer']
+        },
+        {
+            text: 'Copy Style',
+            callback: () => ctxCopyStyle(row, col)
+        },
+        {
+            text: 'Paste Style',
+            classes: (copiedStyle == null ? ['disabled'] : []),
+            callback: () => ctxPasteStyle(row, col)
+        },
+        {
+            classes: ['spacer']
+        },
+        {
+            text: 'Clear',
+            classes: ['danger'],
+            callback: () => ctxClear(row, col)
+        }
     ];
 
-    items.forEach((item) => itemContainer.append(item));
-    menu.append(itemContainer);
-
-    menu.css("position", "absolute");
-    menu.css("top", e.pageY + "px");
-    menu.css("left", e.pageX + "px")
-
-    $('body').append(menu);
-
-    if (copiedStyle == null) {
-        $('#bsCtxPasteStyle').addClass('disabled');
-    }
-
-    ctxMenu = menu;
-
-    $("#bsCtxChooseFile").click(() => ctxChooseFile(row, col));
-    $("#bsCtxSettings").click(() => ctxSettings(row, col));
-    $("#bsCtxCopyStyle").click(() => ctxCopyStyle(row, col));
-    $("#bsCtxPasteStyle").click(() => ctxPasteStyle(row, col));
-    $("#bsCtxClear").click(() => ctxClear(row, col));
+    showContextMenu(items, e.pageX, e.pageY);
 }
 
 function ctxChooseFile(row, col) {
@@ -352,6 +367,10 @@ function ctxClear(row, col) {
 
     buttons = buttons.filter((btn) => btn.row !== row && btn.col !== col);
 }
+
+playNowBtn.click(() => {
+    window.electronAPI.openMediaSelector(null, null, winId);
+});
 
 playPauseBtn.click(() => {
     player.playPause();

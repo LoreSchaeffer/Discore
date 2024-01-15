@@ -105,18 +105,14 @@
     padding-top: 3px;
 }
 
-#navMenu {
+#navbarSupportedContent span {
     font-size: calc(var(--nav-height) - 10px);
     line-height: calc(var(--nav-height) - 10px);
     font-weight: 500;
     color: var(--def-text);
-    padding-left: 8px;
+    padding-left: 4px;
     user-select: none;
     -webkit-app-region: no-drag;
-}
-
-#navMenu:hover {
-    color: var(--def-text-hover);
 }
 
 #navRightGroup {
@@ -154,6 +150,10 @@
     padding-top: 1px;
 }
 
+#navMenu {
+    padding-left: 8px;
+}
+
 #navClose {
     padding-right: 8px;
 }
@@ -176,7 +176,7 @@
     background-color: var(--context-menu);
     user-select: none;
     -webkit-user-select: none;
-    border-radius: 3px;
+    border-radius: 4px;
     padding: 5px;
     min-width: 150px;
     z-index: 500;
@@ -189,7 +189,9 @@
 }
 
 .context-menu li {
-    display: block;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     padding: 5px 10px;
     cursor: pointer;
     color: var(--def-text);
@@ -235,17 +237,14 @@
     background-color: var(--danger);
 }
 
-.context-menu .submenu-toggle::after {
-    display: inline-block;
-    float: right;
-    font-family: "Font Awesome 5 Free";
-    font-weight: 900;
-    content: "\f054";
-    text-align: right;
+.context-menu .fa-chevron-right {
+    justify-self: flex-end;
+    margin-left: auto;
+    font-size: 75%;
+    font-weight: 600;
 }
 
 .submenu {
-    position: absolute;
     display: none;
 }
 

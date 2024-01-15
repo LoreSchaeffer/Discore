@@ -11,7 +11,7 @@ const CONFIG = new Conf("conf");
 const windows = {};
 let mainWindow;
 
-//TODO Manage media buttons
+//TODO Listen for media events (play, pause, stop, etc.)
 
 if (require('electron-squirrel-startup')) {
     app.quit();
@@ -164,6 +164,56 @@ ipcMain.handle('open_media_dialog', async () => {
             {name: 'Audio', extensions: ['mp3', 'wav', 'ogg']}
         ]
     })
+});
+
+ipcMain.on('play_now', async (event, winId, uri, track) => {
+    if (winId === null) {
+        CONFIG.removeButton(row, col);
+        CONFIG.saveButtons();
+        return;
+    }
+
+    windows[winId].close();
+    delete windows[winId];
+
+    if (track != null) {
+        try {
+            const stream = await play.stream(track.uri);
+            track.url = stream.url;
+        } catch (e) {
+            console.log(e);
+        }
+    } else {
+        track = {
+            title: '',
+            uri: uri,
+            duration: 0,
+            thumbnail: ''
+        }
+
+        if (isYouTubeUrl(uri)) {
+            const info = await video_basic_info(uri);
+            track.title = info.video_details.title;
+            track.uri = uri;
+            track.duration = info.video_details.durationInSec;
+            track.thumbnail = info.video_details.thumbnails[0].url;
+        } else {
+            try {
+                const meta = await mm.parseFile(uri);
+                if (meta != null) {
+                    if (meta.common.title != null) track.title = meta.common.title;
+                    else track.title = path.basename(uri);
+                    track.duration = Math.round(meta.format.duration);
+                }
+            } catch (e) {
+                console.log(e);
+            }
+        }
+    }
+
+    track.title = track.title.trim();
+
+    mainWindow.webContents.send('play_now', track);
 });
 
 ipcMain.on('set_button', async (event, winId, row, col, uri, track) => {

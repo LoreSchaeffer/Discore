@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     handleButtonSwap: (callback) => ipcRenderer.on('button_swap', callback),
     handleOutputDevice: (callback) => ipcRenderer.on('output_device', callback),
     handleButton: (callback) => ipcRenderer.on('button', callback),
+    handlePlayNow: (callback) => ipcRenderer.on('play_now', callback),
 
     menu: (winId) => ipcRenderer.send('menu', winId),
     minimize: (winId) => ipcRenderer.send('minimize', winId),
@@ -21,6 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     search: (query) => ipcRenderer.invoke('search', query),
     openUrl: (url) => ipcRenderer.send('open_url', url),
     openMediaDialog: () => ipcRenderer.invoke('open_media_dialog'),
+    playNow: (winId, uri, track) => ipcRenderer.send('play_now', winId, uri, track),
     setButton: (winId, row, col, uri, track) => ipcRenderer.send('set_button', winId, row, col, uri, track),
     swapButtons: (row1, col1, row2, col2) => ipcRenderer.send('swap_buttons', row1, col1, row2, col2),
     getSettings: () => ipcRenderer.invoke('get_settings'),
