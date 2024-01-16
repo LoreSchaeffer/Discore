@@ -1,4 +1,3 @@
-let navMenu;
 let navMinimize;
 let navMaximize;
 let navClose;
@@ -6,16 +5,13 @@ let navClose;
 let winId = -1;
 let contextMenu;
 
-const nav = $(`<nav class="navbar navbar-expand navbar-dark bg-dark fixed-top">
+const nav = $(`<nav class="navbar navbar-expand navbar-dark background-tertiary fixed-top">
     <div class="container-fluid" id="navbarSupportedContent">
-        <ul id="navLeftGroup" class="navbar-nav">
-            <li id="navMenu" class="nav-item"><i class="fa-solid fa-bars"></i></li>
-        </ul>
-        <span>Discore</span>
+        <span id="navTitle">Discore</span>
         <ul id="navRightGroup" class="navbar-nav">
-            <li id="navMinimize" class="nav-item"><i class="fa-solid fa-minus"></i></li>
-            <li id="navMaximize" class="nav-item"><i class="fa-regular fa-square"></i></li>
-            <li id="navClose" class="nav-item"><i class="fa-solid fa-xmark"></i></li>
+            <li id="navMinimize" class="nav-item"><span class="material-symbols-rounded">remove</span></li>
+            <li id="navMaximize" class="nav-item"><span class="material-symbols-rounded">check_box_outline_blank</span></li>
+            <li id="navClose" class="nav-item"><span class="material-symbols-rounded">close</span></li>
         </ul>
     </div>
 </nav>`);
@@ -23,12 +19,10 @@ const nav = $(`<nav class="navbar navbar-expand navbar-dark bg-dark fixed-top">
 $(document).ready(() => {
     $('body').prepend(nav);
 
-    navMenu = $('#navMenu');
     navMinimize = $('#navMinimize');
     navMaximize = $('#navMaximize');
     navClose = $('#navClose');
 
-    navMenu.click(() => window.electronAPI.menu(winId));
     navMinimize.click(() => window.electronAPI.minimize(winId));
     navMaximize.click(() => window.electronAPI.maximize(winId));
     navClose.click(() => window.electronAPI.close(winId));
@@ -40,16 +34,50 @@ $(document).ready(() => {
         if (!isResizable) navMaximize.remove();
     });
 
-    $(document).click(() => hideContextMenu());
-    $(document).contextmenu(() => hideContextMenu());
+    $(document).click((e) => hideContextMenu(e));
+    $(document).contextmenu((e) => hideContextMenu(e));
 
-    $('.range').each(function () {
-        $(this).append('<div class="range-track"></div>');
-        updateRangeTrack($(this).children('.form-range'));
+    $('.progress').each(function () {
+        const container = $(this);
+        const min = container.attr('aria-valuemin');
+        const max = container.attr('aria-valuemax');
+        const value = container.attr('aria-valuenow');
+        const disabled = container.attr('disabled') !== undefined;
+
+        const range = $(`<input type="range" class="form-range" min="${min}" max="${max}" value="${value}" step="1">`);
+        const progress = $(`<div class="progress-bar"></div>`);
+
+        if (disabled) range.attr('disabled', true);
+
+        container.append(range);
+        container.append(progress);
+
+        range.on('input', function () {
+            const rangeValue = (range.val() - range.attr('min')) / (range.attr('max') - range.attr('min'));
+            const progressWidth = rangeValue * 100 + '%';
+
+            container.attr('aria-valuenow', range.val());
+
+            progress.css('width', progressWidth);
+        });
+
+        range.trigger('input');
     });
 
-    $('.form-range').on('input', function () {
-        updateRangeTrack($(this));
+    $('.number-spinner').each(function () {
+        const spinner = $(this);
+        const id = spinner.attr('data-for');
+        const value = spinner.attr('data-value');
+        const min = spinner.attr('data-min');
+        const label = spinner.attr('data-label');
+
+        spinner.append(`<span data-for="${id}" class="spinner-element next"><i class="fas fa-plus"></i></span>`);
+        spinner.append(`<span data-for="${id}" class="spinner-element prev"><i class="fas fa-minus"></i></span>`);
+        spinner.append(`<input id="${id}" type="number" class="number-input num-input-spinner" value="${value}" min="${min}" />`);
+
+        if (label) {
+            spinner.before(`<label for="${id}">${label}</label>`);
+        }
     });
 
     $('.spinner-element.next').click(function () {
@@ -73,17 +101,18 @@ $(document).ready(() => {
     });
 });
 
-    /*
-     * items: [
-     *   {
-     *     text: string,
-     *     icon: class (optional),
-     *     classes: [](spacer, danger, disabled, submenu-toggle ...) (optional),
-     *     callback: function (optional,
-     *     submenu: [](optional)
-     *   }
-     * ]
-     */
+/*
+ * items: [
+ *   {
+ *     text: string,
+ *     icon: class (optional),
+ *     classes: [](spacer, danger, disabled, submenu-toggle ...) (optional),
+ *     callback: function (optional,
+ *     submenu: [](optional),
+ *     data: string (optional)
+ *   }
+ * ]
+ */
 function showContextMenu(items, posX, posY) {
     hideContextMenu();
 
@@ -99,25 +128,28 @@ function showContextMenu(items, posX, posY) {
             ctxMenu.children('ul').append('<li class="spacer"></li>');
         } else {
             const classes = item.classes ? item.classes.join(' ') : '';
-            const ctxItem = $(`<li ${classes !== '' ? 'class="' + classes + '"' : ''}>${item.text}</li>`);
+            const ctxItem = $(`<li class="ctx-item${classes !== '' ? ' ' + classes : ''}">${item.text}</li>`);
 
-            if (item.icon) ctxItem.prepend($('<i class="' + item.icon + '"></i>'));
+            if (item.icon) ctxItem.prepend($(`<span class="material-symbols-rounded">${item.icon}</span>`));
+            if (item.data) ctxItem.attr('data-value', item.data);
 
             if (item.classes != null && item.classes.includes('submenu-toggle')) {
                 ctxItem.attr('data-target', 'submenu-' + i);
-                ctxItem.append($('<i class="fa-solid fa-chevron-right"></i>'));
+                ctxItem.append($('<span class="material-symbols-rounded">chevron_right</span>'));
 
                 const submenu = $(`<div id="submenu-${i}" class="context-menu submenu"><ul></ul></div>`);
 
                 for (const subItem of item.submenu) {
                     const subClasses = subItem.classes ? subItem.classes.join(' ') : '';
-                    const subCtxItem = $(`<li ${subClasses !== '' ? 'class="' + subClasses + '"' : ''}>${subItem.text}</li>`);
+                    const subCtxItem = $(`<li class="ctx-item${subClasses !== '' ? ' ' + subClasses : ''}">${subItem.text}</li>`);
 
-                    if (subItem.icon) subCtxItem.prepend($('<i class="' + subItem.icon + '"></i>'));
+                    if (subItem.icon) subCtxItem.prepend($(`<span class="material-symbols-rounded">${subItem.icon}</span>`));
 
                     subCtxItem.click(() => {
                         if (subCtxItem.hasClass('disabled')) return;
-                        if (subItem.callback) subItem.callback();
+                        if (subItem.callback) {
+                            if (subItem.callback(subCtxItem)) return;
+                        }
                         submenu.remove();
                     });
 
@@ -141,10 +173,13 @@ function showContextMenu(items, posX, posY) {
                 submenus.push([ctxItem, submenu]);
             }
 
-            ctxItem.click(() => {
+            ctxItem.click((e) => {
                 if (ctxItem.hasClass('disabled')) return;
                 if (ctxItem.hasClass('submenu-toggle')) return;
-                if (item.callback) item.callback();
+                if (item.callback) {
+                    if (item.callback(ctxItem)) return;
+                    console.log('callback returned true');
+                }
                 ctxMenu.remove();
             });
             ctxMenu.children('ul').append(ctxItem);
@@ -173,10 +208,16 @@ function showContextMenu(items, posX, posY) {
     }
 
     contextMenu = ctxMenu;
+    return ctxMenu;
 }
 
-function hideContextMenu() {
+function hideContextMenu(e) {
     if (contextMenu !== undefined) {
+        if (e) {
+            const target = $(e.target);
+            if (target && target.hasClass('ctx-item')) return;
+        }
+
         contextMenu.find('li').off('click');
         contextMenu.find('.submenu-toggle').off('hover');
         contextMenu.remove();
@@ -193,11 +234,42 @@ function hideSubmenu(submenu, toggle) {
     }, 150);
 }
 
-function updateRangeTrack(range) {
-    const rangeValue = (range.val() - range.attr('min')) / (range.attr('max') - range.attr('min'));
-    const rangeTrackWidth = rangeValue * 100 + '%';
+function setProgressDuration(progress, min, max, value) {
+    progress.attr('aria-valuemin', min);
+    progress.attr('aria-valuemax', max);
+    progress.attr('aria-valuenow', value);
 
-    range.parent().find('.range-track').css('width', rangeTrackWidth);
+    const range = progress.children('input');
+    const progressbar = progress.children('.progress-bar');
+
+    range.attr('min', min);
+    range.attr('max', max);
+    range.val(value);
+    range.trigger('input');
+}
+
+function updateProgressValue(progress, value) {
+    progress.attr('aria-valuenow', value);
+
+    const range = progress.children('input');
+    const progressbar = progress.children('.progress-bar');
+
+    range.val(value);
+    range.trigger('input');
+}
+
+function setProgressListener(progress, listener, callback) {
+    const range = progress.children('.form-range');
+    range.on(listener, callback);
+}
+
+function enableProgress(progress) {
+    progress.children('input').removeAttr('disabled');
+}
+
+function disableProgress(progress) {
+    progress.children('input').attr('disabled', '');
+
 }
 
 function formatDuration(duration) {

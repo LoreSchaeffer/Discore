@@ -1,13 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8"/>
     <title>ESoundboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="libs/css/roboto.css"/>
-    <link rel="stylesheet" href="libs/mdb/css/mdb.dark.min.css">
-    <link rel="stylesheet" href="libs/fontawesome/css/fontawesome.min.css"/>
-    <link rel="stylesheet" href="libs/fontawesome/css/all.min.css"/>
+    <meta http-equiv="Content-Security-Policy" content="default-src *; script-src *">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="libs/bootstrap/css/bootstrap.min.css">
+
     <link rel="stylesheet" href="css/styles.css"/>
     <link rel="stylesheet" href="css/button_settings.css"/>
 </head>
@@ -16,7 +18,7 @@
     <div id="formContainer">
         <div id="inputRow" class="input-row">
             <div class="form-outline">
-                <input type="text" id="uri" class="form-control" readonly/>
+                <input type="text" id="uri" class="form-control form-control-sm" readonly/>
                 <label class="form-label" for="uri">File or Url</label>
             </div>
             <a id="openMediaSelector" role="button" class="btn text-white" style="background-color: var(--primary);" href="#"><i class="fa-solid fa-pen-to-square"></i></a>
@@ -25,7 +27,7 @@
 
     <div id="buttonSettings">
         <div class="form-outline">
-            <input type="text" id="title" class="form-control" />
+            <input type="text" id="title" class="form-control form-control-sm" />
             <label class="form-label" for="title">Title</label>
         </div>
 
@@ -120,7 +122,7 @@
 </div>
 
 <script src="libs/js/jquery-3.7.1.min.js"></script>
-<script src="libs/mdb/js/mdb.min.js"></script>
+<script src="libs/bootstrap/js/bootstrap.min.js"></script>
 <script src="js/scripts.js"></script>
 <script src="js/button_settings.js"></script>
 </body>

@@ -1,21 +1,34 @@
+const trackInfo = $('#trackInfo');
 const thumbnail = $('#thumbnail');
-const playPauseBtn = $('#playPause');
-const stopBtn = $('#stop');
-const playNowBtn = $('#playNow');
-const volumeRange = $('#volume');
-const progressRange = $('#progress');
-const progressThumb = progressRange.parent().find('.thumb .thumb-value');
 const trackName = $('#trackName');
-const rowsInput = $('#rows');
-const colsInput = $('#cols');
+const trackSrc = $('#trackSrc');
+
+const stopBtn = $('#stop');
+const prevBtn = $('#previous');
+const playPauseBtn = $('#playPause');
+const nextBtn = $('#next');
+const repeatBtn = $('#repeat');
+
+const currentTime = $('#currentTime');
+const progressBar = $('#progressBar');
+const duration = $('#duration');
+
+const searchBtn = $('#search');
+const mediaOutputBtn = $('#mediaOutput');
+const playlistBtn = $('#playlist');
+const volumeBtn = $('#volume');
+const volumeSlider = $('#volumeSlider');
+const settingsBtn = $('#settings');
 
 let buttons = [];
 let rows = 0;
 let cols = 0;
 let player;
+
 let progressRangeMD = false;
 let isDragging = false;
 let dragSuccess = null;
+
 let copiedStyle = null;
 
 $(document).ready(() => {
@@ -36,14 +49,54 @@ $(document).ready(() => {
     });
 
     window.electronAPI.getVolume().then((volume) => {
-        volumeRange.val(volume);
-        volumeRange.trigger('input');
+        updateProgressValue(volumeSlider, volume);
     });
 
     window.electronAPI.getOutputDevice().then((deviceId) => {
         player.setOutputDevice(deviceId);
     });
+
+    const rowsInput = $('#rows');
+    const colsInput = $('#cols');
+
+    rowsInput.change(() => {
+        rows = rowsInput.val();
+        window.electronAPI.setSoundboardSize([rows, cols]);
+        createSoundboard();
+    });
+
+    colsInput.change(() => {
+        cols = colsInput.val();
+        window.electronAPI.setSoundboardSize([rows, cols]);
+        createSoundboard();
+    });
+
+    setProgressListener(progressBar, 'mousedown', () => {
+        progressRangeMD = true;
+    });
+
+    setProgressListener(progressBar, 'mouseup', () => {
+        progressRangeMD = false;
+        player.seekTo(progressBar.attr('aria-valuenow'));
+    });
+
+    setProgressListener(volumeSlider, 'input', () => {
+        const volume = volumeSlider.attr('aria-valuenow');
+        player.setVolume(volume);
+        window.electronAPI.setVolume(volume);
+
+        const volumeSymbol = volumeBtn.find('.material-symbols-rounded');
+        if (volume <= 10) {
+            volumeSymbol.text('volume_mute');
+        } else if (volume <= 50) {
+            volumeSymbol.text('volume_down');
+        } else {
+            volumeSymbol.text('volume_up');
+        }
+    });
 });
+
+// Listeners
 
 $(document).on('wheel', (e) => {
     if (e.originalEvent.ctrlKey) {
@@ -57,6 +110,86 @@ $(document).on('wheel', (e) => {
         buttons.css('line-height', size + 'px');
     }
 });
+
+stopBtn.click(() => {
+    //TODO Now buttons are not disabled
+    player.stop();
+});
+
+prevBtn.click(() => {
+    //TODO
+});
+
+playPauseBtn.click(() => {
+    //TODO Now buttons are not disabled
+    player.playPause();
+});
+
+nextBtn.click(() => {
+    //TODO
+});
+
+repeatBtn.click(() => {
+    //TODO
+});
+
+searchBtn.click(() => {
+    //TODO Refactor
+    window.electronAPI.openMediaSelector(null, null, winId);
+});
+
+playlistBtn.click(() => {
+    //TODO
+});
+
+mediaOutputBtn.click(async () => {
+    const items = [];
+
+    const selectedOutputDevice = (await window.electronAPI.getSettings()).output_device;
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    devices.forEach((device) => {
+        if (device.kind !== 'audiooutput') return;
+
+        if (device.deviceId === 'default' || device.deviceId === 'communications') return;
+
+        const selected = device.deviceId === selectedOutputDevice;
+
+        const item = {
+            text: device.label,
+            data: device.deviceId,
+            icon: selected ? 'done' : 'volume_up',
+            callback: changeAudioOutput
+        };
+
+        if (selected) item.classes = ['active'];
+
+        items.push(item);
+    });
+
+    items.push({classes: ['spacer']});
+
+    items.push({
+        text: 'Test Playback',
+        icon: 'play_arrow',
+        callback: testPlayback
+    });
+
+    const ctxMenu = showContextMenu(items, 0, 0);
+    ctxMenu.addClass('media-output-ctx-menu');
+    ctxMenu.css('left', `calc(100% - ${ctxMenu.outerWidth() + 8}px)`);
+    ctxMenu.css('top', (mediaOutputBtn.offset().top - ctxMenu.outerHeight() - 8) + 'px');
+});
+
+volumeBtn.click(() => {
+    // TODO volume_off <-> volume
+});
+
+settingsBtn.click(() => {
+    //TODO
+});
+
+
+// Electron listeners
 
 window.electronAPI.handleButtonUpdate((event, button) => {
     const index = buttons.findIndex((btn) => btn.row === button.row && btn.col === button.col);
@@ -105,6 +238,8 @@ window.electronAPI.handlePlayNow(async (event, track) => {
 
     player.play(track, null, track.duration * 1000);
 });
+
+// Soundboard generation
 
 function createSoundboard() {
     const soundboard = $('#soundboard');
@@ -318,6 +453,8 @@ function sbRightClick(e) {
     showContextMenu(items, e.pageX, e.pageY);
 }
 
+// Context menu callbacks
+
 function ctxChooseFile(row, col) {
     window.electronAPI.openMediaSelector(row, col, winId);
 }
@@ -368,76 +505,45 @@ function ctxClear(row, col) {
     buttons = buttons.filter((btn) => btn.row !== row && btn.col !== col);
 }
 
-playNowBtn.click(() => {
-    window.electronAPI.openMediaSelector(null, null, winId);
-});
-
-playPauseBtn.click(() => {
-    player.playPause();
-});
-
-stopBtn.click(() => {
-    player.stop();
-});
-
-volumeRange.on('input', () => {
-    player.setVolume(volumeRange.val());
-    window.electronAPI.setVolume(volumeRange.val());
-});
-
-progressRange.mousedown(() => {
-    progressRangeMD = true;
-});
-
-progressRange.mouseup(() => {
-    progressRangeMD = false;
-    player.seekTo(progressRange.val());
-});
-
-progressRange.on('input', () => {
-    progressThumb.text(formatDuration(progressRange.val()));
-});
-
-rowsInput.change(() => {
-    rows = rowsInput.val();
-    window.electronAPI.setSoundboardSize([rows, cols]);
-    createSoundboard();
-});
-
-colsInput.change(() => {
-    cols = colsInput.val();
-    window.electronAPI.setSoundboardSize([rows, cols]);
-    createSoundboard();
-});
+// Player events
 
 function onPlay(track) {
-    progressRange.attr('max', track.duration);
-    progressRange.attr('value', 0);
-    progressRange.attr('disabled', false);
+    setProgressDuration(progressBar, 0, track.duration, 0);
+    enableProgress(progressBar);
+
+    currentTime.text(formatDuration(0));
+    currentTime.show();
+
+    duration.text(formatDuration(track.duration));
+    duration.show();
 
     trackName.text(track.title);
-
+    trackSrc.text(track.uri);
     if (track.thumbnail) thumbnail.css('background-image', `url(${track.thumbnail})`);
-    thumbnail.css('opacity', 1);
+
+    trackInfo.css('display', 'flex');
 
     setPauseButton();
-    playPauseBtn.removeClass('btn-disabled');
-    stopBtn.removeClass('btn-disabled');
 }
 
 function onStop() {
-    trackName.html('&nbsp;');
-    progressRange.val(0);
-    progressRange.trigger('input');
-    progressRange.attr('max', 0);
-    progressRange.attr('disabled', true);
+    updateProgressValue(progressBar, 0);
+    setProgressDuration(progressBar, 0, 0, 0);
+    disableProgress(progressBar);
 
+    currentTime.text(formatDuration(0));
+    currentTime.hide();
+
+    duration.text(formatDuration(0));
+    duration.hide();
+
+    trackName.text('');
+    trackSrc.text('');
     thumbnail.css('background-image', 'url("images/track.png")');
-    thumbnail.css('opacity', 0.5);
+
+    trackInfo.hide();
 
     setPlayButton();
-    playPauseBtn.addClass('btn-disabled');
-    stopBtn.addClass('btn-disabled');
 }
 
 function onPause() {
@@ -450,19 +556,54 @@ function onResume() {
 
 function onTimeUpdate(time) {
     if (!progressRangeMD) {
-        progressRange.val(time);
-        progressRange.trigger('input');
+        updateProgressValue(progressBar, time);
+        currentTime.text(formatDuration(time));
     }
 }
 
+// Player controls
+
 function setPlayButton() {
-    playPauseBtn.css('background-color', 'var(--green)');
-    playPauseBtn.find('i').removeClass('fa-pause');
-    playPauseBtn.find('i').addClass('fa-play');
+    playPauseBtn.find('.material-symbols-rounded').text('play_circle');
 }
 
 function setPauseButton() {
-    playPauseBtn.css('background-color', 'var(--orange)');
-    playPauseBtn.find('i').removeClass('fa-play');
-    playPauseBtn.find('i').addClass('fa-pause');
+    playPauseBtn.find('.material-symbols-rounded').text('pause_circle');
+}
+
+function enableRepeatButton(one) {
+    repeatBtn.removeClass('off');
+
+    const symbol = repeatBtn.find('.material-symbols-rounded');
+    if (one) symbol.text('repeat_one');
+    else symbol.text('repeat');
+}
+
+function disableRepeatButton() {
+    repeatBtn.addClass('off');
+    repeatBtn.find('.material-symbols-rounded').text('repeat');
+}
+
+function changeAudioOutput(ctxItem) {
+    const oldActive = contextMenu.find('.active');
+    oldActive.removeClass('active');
+    oldActive.find('.material-symbols-rounded').text('volume_up');
+
+    ctxItem.addClass('active');
+    ctxItem.find('.material-symbols-rounded').text('done');
+
+    const deviceId = ctxItem.attr('data-value');
+    player.setOutputDevice(deviceId);
+
+    //TODO Send update to main process
+    return true;
+}
+
+function testPlayback(ctxItem) {
+    const audio = new Audio('audio/test.mp3');
+    audio.setSinkId(ctxItem.parent().find('.active').attr('data-value')).then(async () => {
+        await audio.play();
+    });
+
+    return true;
 }

@@ -1,56 +1,61 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8"/>
     <title>ESoundboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="libs/css/roboto.css"/>
-    <link rel="stylesheet" href="libs/mdb/css/mdb.dark.min.css">
-    <link rel="stylesheet" href="libs/fontawesome/css/fontawesome.min.css"/>
-    <link rel="stylesheet" href="libs/fontawesome/css/all.min.css"/>
+    <meta http-equiv="Content-Security-Policy" content="default-src *; script-src *">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="libs/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/styles.css"/>
     <link rel="stylesheet" href="css/index.css"/>
 </head>
 <body>
 <div id="mainContainer" class="container-fluid">
-    <div id="soundboard"></div>
-    <div id="player" class="container-fluid fixed-bottom">
-        <div id="thumbnail"></div>
-        <div id="leftBtnGroup" class="btns-group">
-            <a id="playPause" role="button" class="btn text-white btn-player btn-disabled" style="background-color: var(--green);" href="#"><i class="fa-solid fa-play"></i></a>
-            <a id="stop" role="button" class="btn text-white btn-player btn-disabled" style="background-color: var(--red);" href="#"><i class="fa-solid fa-stop"></i></a>
-            <a id="playNow" role="button" class="btn text-white btn-player" style="background-color: var(--blurple);" href="#"><i class="fa-regular fa-circle-play"></i></a>
+    <div id="soundboard" class="background-primary"></div>
+    <div id="player" class="container-fluid background-secondary fixed-bottom">
+        <div id="trackInfo">
+            <div id="thumbnail"></div>
+            <div id="track">
+                <span id="trackName"></span>
+                <span id="trackSrc"></span>
+            </div>
         </div>
-        <div id="seekBarsContainer">
-            <label class="form-label" for="volume">Volume</label>
-            <div class="range">
-                <input id="volume" type="range" class="form-range" min="0" max="100" step="1" value="50">
+        <div id="playerControls">
+            <div id="controlButtons">
+                <a id="stop" role="button" class="control-btn" href="#"><span class="material-symbols-rounded">stop</span></a>
+                <a id="previous" role="button" class="control-btn" href="#"><span class="material-symbols-rounded">skip_previous</span></a>
+                <a id="playPause" role="button" class="control-btn" href="#"><span class="material-symbols-rounded">play_circle</span></a>
+                <a id="next" role="button" class="control-btn" href="#"><span class="material-symbols-rounded">skip_next</span></a>
+                <a id="repeat" role="button" class="control-btn" href="#"><span class="material-symbols-rounded">repeat</span></a>
             </div>
-            <div id="progressRange" class="range">
-                <input id="progress" type="range" class="form-range" min="0" max="0" step="1" value="0" disabled>
+            <div id="progressBarGroup">
+                <span id="currentTime" class="progress-number">0:00</span>
+                <div id="progressBar" class="progress" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" disabled></div>
+                <span id="duration" class="progress-number">0:00</span>
             </div>
-            <p id="trackName">&nbsp;</p>
         </div>
-        <div id="soundboardSettings">
-            <label id="rowsLabel" for="rows">Rows</label>
-            <div class="number-spinner">
-                <span data-for="rows" class="spinner-element next"><i class="fas fa-plus"></i></span>
-                <span data-for="rows" class="spinner-element prev"><i class="fas fa-minus"></i></span>
-                <input id="rows" type="number" class="number-input num-input-spinner" value="0" min="1" />
-            </div>
-            <label for="cols">Columns</label>
-            <div class="number-spinner">
-                <span data-for="cols" class="spinner-element next"><i class="fas fa-plus"></i></span>
-                <span data-for="cols" class="spinner-element prev"><i class="fas fa-minus"></i></span>
-                <input id="cols" type="number" class="number-input num-input-spinner" value="0" min="1" />
-            </div>
+        <div id="rightControls">
+            <a id="search" role="button" class="control-btn" href="#"><span class="material-symbols-rounded">search</span></a>
+            <a id="playlist" role="button" class="control-btn" href="#"><span class="material-symbols-rounded">queue_music</span></a>
+            <a id="mediaOutput" role="button" class="control-btn" href="#"><span class="material-symbols-rounded">media_output</span></a>
+            <a id="volume" role="button" class="control-btn" href="#"><span class="material-symbols-rounded">volume_up</span></a>
+            <div id="volumeSlider" class="progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"></div>
+            <a id="settings" role="button" class="control-btn" href="#"><span class="material-symbols-rounded">settings</span></a>
+            <!--<div id="soundboardSettings">
+                <div class="number-spinner" data-for="rows" data-value="0" data-min="1" data-label="Rows"></div>
+                <div class="number-spinner" data-for="cols" data-value="0" data-min="1" data-label="Columns"></div>
+            </div>-->
         </div>
     </div>
 </div>
 
 <script src="libs/js/jquery-3.7.1.min.js"></script>
 <script src="libs/jquery-ui-1.13.2/jquery-ui.min.js"></script>
-<script src="libs/mdb/js/mdb.min.js"></script>
+<script src="libs/bootstrap/js/bootstrap.min.js"></script>
 <script src="js/scripts.js"></script>
 <script src="js/player.js"></script>
 <script src="js/index.js"></script>
