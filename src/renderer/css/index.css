@@ -249,6 +249,12 @@
     background-color: var(--blurple);
 }
 
+#createProfile {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+}
+
 
 @media screen and (max-width: 1225px) {
     #progressBar {

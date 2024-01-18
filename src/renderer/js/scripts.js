@@ -129,7 +129,7 @@ function showContextMenu(items, posX, posY) {
             ctxMenu.children('ul').append('<li class="spacer"></li>');
         } else {
             const classes = item.classes ? item.classes.join(' ') : '';
-            const ctxItem = $(`<li class="ctx-item${classes !== '' ? ' ' + classes : ''}">${item.text}</li>`);
+            const ctxItem = $(`<li class="ctx-item${classes !== '' ? ' ' + classes : ''}" data-text="${item.text}">${item.text}</li>`);
 
             if (item.icon) ctxItem.prepend($(`<span class="material-symbols-rounded">${item.icon}</span>`));
             if (item.data) ctxItem.attr('data-value', item.data);
@@ -142,7 +142,7 @@ function showContextMenu(items, posX, posY) {
 
                 for (const subItem of item.submenu) {
                     const subClasses = subItem.classes ? subItem.classes.join(' ') : '';
-                    const subCtxItem = $(`<li class="ctx-item ctx-subitem${subClasses !== '' ? ' ' + subClasses : ''}">${subItem.text}</li>`);
+                    const subCtxItem = $(`<li class="ctx-item ctx-subitem${subClasses !== '' ? ' ' + subClasses : ''}" data-text="${subItem.text}">${subItem.text}</li>`);
 
                     if (subItem.icon) subCtxItem.prepend($(`<span class="material-symbols-rounded">${subItem.icon}</span>`));
 
@@ -153,6 +153,7 @@ function showContextMenu(items, posX, posY) {
                             if (subItem.callback(subCtxItem, parentItem)) return;
                         }
                         submenu.remove();
+                        ctxMenu.remove();
                     });
 
                     submenu.children('ul').append(subCtxItem);
@@ -181,7 +182,9 @@ function showContextMenu(items, posX, posY) {
                 if (item.callback) {
                     if (item.callback(ctxItem)) return;
                 }
+
                 ctxMenu.remove();
+                $('.submenu').remove();
             });
             ctxMenu.children('ul').append(ctxItem);
         }
@@ -233,6 +236,21 @@ function hideSubmenu(submenu, toggle) {
     setTimeout(function () {
         if (!submenu.is(':hover') && !toggle.is(':hover')) submenu.removeClass('active');
     }, 150);
+}
+
+function createMenu(id, content) {
+    const menuContainer = $('<div class="menu-container"></div>');
+    const menuContent = $(`<div id="${id}" class="menu-content"></div>`);
+    const exitButton = $('<div class="menu-exit"><span class="material-symbols-rounded">cancel</span><span class="exit-text">ESC</span></div>');
+
+    menuContent.append(content);
+    menuContent.append(exitButton);
+    menuContainer.append(menuContent);
+    $('body').append(menuContainer);
+
+    exitButton.click(() => menuContainer.remove());
+
+    return menuContainer;
 }
 
 function setProgressDuration(progress, min, max, value) {

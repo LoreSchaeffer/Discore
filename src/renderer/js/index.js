@@ -21,7 +21,6 @@ const volumeSlider = $('#volumeSlider');
 const settingsBtn = $('#settings');
 
 let sbSettings = null;
-let profiles = null;
 let player;
 
 let progressRangeMD = false;
@@ -40,53 +39,14 @@ $(document).ready(async () => {
 
     sbSettings = await window.electronAPI.getSoundboardSettings();
 
-    window.electronAPI.getProfiles().then((p) => {
-        profiles = p;
-
+    window.electronAPI.getProfiles().then((profiles) => {
         const activeProfileName = profiles.find((p) => p.id === sbSettings.active_profile).name;
 
         const profileSelect = $('#navProfileContainer');
         profileSelect.append(`<span id="activeProfile">${activeProfileName}</span>`);
         profileSelect.append(`<span class="material-symbols-rounded">expand_more</span>`);
 
-        profileSelect.click((e) => {
-            e.stopPropagation();
-            const items = [];
-
-            profiles.forEach((profile) => {
-                const item = {
-                    text: profile.name,
-                    data: profile.id,
-                    icon: profile.id === sbSettings.active_profile ? 'radio_button_checked' : 'radio_button_unchecked',
-                    submenu: [
-                        {
-                            text: 'Rename',
-                            callback: renameProfile
-                        },
-                        {
-                            text: 'Delete',
-                            classes: ['danger'],
-                            callback: deleteProfile
-                        }
-                    ],
-                    callback: changeProfile
-                }
-
-                if (profile.id === sbSettings.active_profile) item.classes = ['active'];
-
-                items.push(item);
-            });
-
-            items.push({classes: ['spacer']});
-            items.push({
-                text: 'New Profile',
-                icon: 'add',
-                callback: newProfile
-            });
-
-            const ctxMenu = showContextMenu(items, profileSelect.offset().left, profileSelect.offset().top + profileSelect.outerHeight() + 8);
-            ctxMenu.addClass('profiles-ctx-menu');
-        });
+        profileSelect.click((e) => showProfileMenu(e));
     });
 
     updateProgressValue(volumeSlider, sbSettings.volume);
@@ -649,22 +609,113 @@ function testPlayback(ctxItem) {
 }
 
 // Profiles
-function changeProfile(ctxItem) {
-    console.log(ctxItem.html());
-    return true;
+async function showProfileMenu(e) {
+    e.stopPropagation();
+    const items = [];
+
+    const profileSelect = $('#navProfileContainer');
+    const profiles = await window.electronAPI.getProfiles();
+
+    profiles.forEach((profile) => {
+        const item = {
+            text: profile.name,
+            data: profile.id,
+            icon: profile.id === sbSettings.active_profile ? 'radio_button_checked' : 'radio_button_unchecked',
+            submenu: [
+                {
+                    text: 'Rename',
+                    callback: renameProfile
+                },
+                {
+                    text: 'Delete',
+                    classes: ['danger'],
+                    callback: deleteProfile
+                }
+            ],
+            callback: changeProfile
+        }
+
+        if (profile.id === sbSettings.active_profile) item.classes = ['active'];
+
+        items.push(item);
+    });
+
+    items.push({classes: ['spacer']});
+    items.push({
+        text: 'New Profile',
+        icon: 'add',
+        callback: createProfile
+    });
+
+    const ctxMenu = showContextMenu(items, profileSelect.offset().left, profileSelect.offset().top + profileSelect.outerHeight() + 8);
+    ctxMenu.addClass('profiles-ctx-menu');
 }
 
-function newProfile(ctxItem) {
-    console.log(ctxItem.html());
-    return true;
+function changeProfile(ctxItem) {
+    const profile = {
+        id: ctxItem.attr('data-value'),
+        name: ctxItem.attr('data-text'),
+    };
+
+    window.electronAPI.setActiveProfile(profile.id);
+    setNewProfile(profile);
+}
+
+function createProfile() {
+    const content = '<h4>Create new profile</h4><div class="row form-row"><div class="col-auto"><label for="name" class="col-form-label">Name</label></div><div class="col-auto"><input id="name" type="text" class="form-control form-control-sm"></div></div><button id="createProfile" class="btn btn-success btn-image"><span class="material-symbols-rounded">save</span>Save</button>';
+    const menu = createMenu('newProfile', content);
+
+    $('#createProfile').click(() => {
+        const nameField = $('#name');
+        const name = nameField.val().trim();
+        if (name === '') {
+            nameField.addClass('invalid');
+            setTimeout(() => {
+                nameField.removeClass('invalid');
+            }, 5000);
+        }
+
+        window.electronAPI.createProfile(name).then((profile) => {
+            setNewProfile(profile);
+            menu.remove();
+        }).catch(() => {
+            //TODO Show error alert
+        });
+    });
 }
 
 function renameProfile(ctxItem, parentItem) {
-    console.log(ctxItem.html(), parentItem.html());
-    return true;
+    const content = `<h4>Rename Profile</h4><div class="row form-row"><div class="col-auto"><label for="name" class="col-form-label">Name</label></div><div class="col-auto"><input id="name" type="text" class="form-control form-control-sm" value="${parentItem.attr('data-text')}"></div></div><button id="createProfile" class="btn btn-success btn-image"><span class="material-symbols-rounded">save</span>Save</button>`;
+    const menu = createMenu('newProfile', content);
+
+    $('#createProfile').click(() => {
+        const nameField = $('#name');
+        const name = nameField.val().trim();
+        if (name === '') {
+            nameField.addClass('invalid');
+            setTimeout(() => {
+                nameField.removeClass('invalid');
+            }, 5000);
+        }
+
+        window.electronAPI.renameProfile(parentItem.attr('data-value'), name).then((profile) => {
+            setNewProfile(profile);
+            menu.remove();
+        }).catch(() => {
+            //TODO Show error alert
+        });
+    });
 }
 
 function deleteProfile(ctxItem, parentItem) {
-    console.log(ctxItem.html(), parentItem.html());
-    return true;
+    window.electronAPI.deleteProfile(parentItem.attr('data-value')).then((profile) => {
+        if (profile) setNewProfile(profile);
+    }).catch(() => {
+    });
+}
+
+function setNewProfile(profile) {
+    sbSettings.active_profile = profile.id;
+    $('#activeProfile').text(profile.name);
+    //TODO Rebuild soundboard
 }

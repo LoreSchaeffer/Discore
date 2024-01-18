@@ -39,6 +39,17 @@ const Database = class {
         });
     }
 
+    renameProfile(id, name) {
+        return new Promise((resolve, reject) => {
+            const stmt = this.db.prepare('UPDATE profiles SET name = ? WHERE id = ?');
+            stmt.run([name, id], (e) => {
+                if (e) reject(e);
+                else resolve({id: id, name: name});
+            });
+            stmt.finalize();
+        });
+    }
+
     deleteProfile(id) {
         return new Promise((resolve, reject) => {
             let stmt = this.db.prepare('DELETE FROM buttons WHERE profile = ?');

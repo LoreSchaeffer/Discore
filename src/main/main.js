@@ -50,7 +50,7 @@ const startApp = () => {
         const size = mainWindow.getSize();
         CONFIG.config.width = size[0];
         CONFIG.config.height = size[1];
-        CONFIG.saveConfig();
+        CONFIG.save();
     });
 };
 
@@ -150,22 +150,60 @@ ipcMain.handle('get_soundboard_settings', () => {
 ipcMain.on('set_soundboard_size', (event, width, height) => {
     CONFIG.config.width = width;
     CONFIG.config.height = height;
-    CONFIG.saveConfig();
+    CONFIG.save();
 });
 
 ipcMain.on('set_volume', (event, volume) => {
     CONFIG.config.volume = volume;
-    CONFIG.saveConfig();
+    CONFIG.save();
 });
 
 ipcMain.on('set_media_output', (event, device) => {
     CONFIG.config.output_device = device;
-    CONFIG.saveConfig();
+    CONFIG.save();
 });
 
 // Profiles
 ipcMain.handle('get_profiles', () => {
     return DB.getProfiles();
+});
+
+ipcMain.on('set_active_profile', (event, profile) => {
+    CONFIG.config.active_profile = profile;
+    CONFIG.save();
+});
+
+ipcMain.handle('create_profile', (event, name) => {
+    return new Promise((resolve, reject) => {
+        DB.createProfile(name).then((id) => {
+            CONFIG.config.active_profile = id;
+            CONFIG.save();
+            resolve({id: id, name: name});
+        }).catch(() => {
+            reject(false);
+        });
+    })
+});
+
+ipcMain.handle('rename_profile', (event, id, name) => {
+    return DB.renameProfile(id, name);
+});
+
+ipcMain.handle('delete_profile', (event, id) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const profiles = await DB.getProfiles();
+            if (profiles.length === 1) {
+                reject(new Error("Cannot delete the last remaining profile"));
+            } else {
+                await DB.deleteProfile(id);
+                profiles.splice(profiles.findIndex((profile) => profile.id === id), 1);
+                resolve(profiles.length > 0 ? {id: profiles[0].id, name: profiles[0].name} : null);
+            }
+        } catch (error) {
+            reject(error);
+        }
+    });
 });
 
 // Buttons
@@ -185,7 +223,7 @@ ipcMain.handle('get_button', (event, row, col) => {
 ipcMain.on('set_soundboard_size', (event, size) => {
     CONFIG.config.rows = size[0];
     CONFIG.config.columns = size[1];
-    CONFIG.saveConfig();
+    CONFIG.save();
 });
 
 ipcMain.handle('get_volume', () => {
@@ -194,7 +232,7 @@ ipcMain.handle('get_volume', () => {
 
 ipcMain.on('set_volume', (event, volume) => {
     CONFIG.config.volume = volume;
-    CONFIG.saveConfig();
+    CONFIG.save();
 });
 
 ipcMain.handle('get_buttons', () => {

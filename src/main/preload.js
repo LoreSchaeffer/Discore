@@ -37,11 +37,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setSoundboardSize: (width, height) => ipcRenderer.send('set_soundboard_size', width, height),
     setVolume: (volume) => ipcRenderer.send('set_volume', volume),
     setMediaOutput: (device) => ipcRenderer.send('set_media_output', device),
+    setActiveProfile: (profile) => ipcRenderer.send('set_active_profile', profile),
 
     // Profiles
     getProfiles: () => ipcRenderer.invoke('get_profiles'),
     createProfile: (name) => ipcRenderer.invoke('create_profile', name),
-    deleteProfile: (id) => ipcRenderer.send('delete_profile', id),
+    renameProfile: (id, name) => ipcRenderer.invoke('rename_profile', id, name),
+    deleteProfile: (id) => ipcRenderer.invoke('delete_profile', id),
 
     // Buttons
     getButtons: (profile) => ipcRenderer.invoke('get_buttons', profile),
