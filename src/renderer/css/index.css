@@ -6,6 +6,37 @@
     display: none;
 }
 
+#navProfileContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+}
+
+#navProfileContainer:hover {
+    color: var(--text-primary-hover);
+}
+
+#activeProfile {
+    font-size: calc(var(--nav-height) - 11px);
+    line-height: calc(var(--nav-height) - 11px);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-left: 10px;
+    user-select: none;
+}
+
+#navProfileContainer .material-symbols-rounded {
+    font-size: calc(var(--nav-height) - 11px);
+    line-height: calc(var(--nav-height) - 11px);
+    margin-top: 1px;
+}
+
+.profiles-ctx-menu .active {
+    background-color: var(--blurple);
+}
+
 #soundboard {
     display: grid;
     grid-template-columns: auto auto auto;
@@ -190,6 +221,7 @@
 #progressBar {
     min-width: 500px;
     height: 6px;
+    transition: width 500ms ease-in-out;
 }
 
 .progress-number {
@@ -210,8 +242,20 @@
 #volumeSlider {
     width: 150px;
     height: 6px;
+    transition: width 500ms ease-in-out;
 }
 
 .media-output-ctx-menu .active {
     background-color: var(--blurple);
+}
+
+
+@media screen and (max-width: 1225px) {
+    #progressBar {
+        min-width: 450px;
+    }
+
+    #volumeSlider {
+        width: 100px;
+    }
 }

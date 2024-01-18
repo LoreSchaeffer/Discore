@@ -20,9 +20,8 @@ const volumeBtn = $('#volume');
 const volumeSlider = $('#volumeSlider');
 const settingsBtn = $('#settings');
 
-let buttons = [];
-let rows = 0;
-let cols = 0;
+let sbSettings = null;
+let profiles = null;
 let player;
 
 let progressRangeMD = false;
@@ -31,7 +30,7 @@ let dragSuccess = null;
 
 let copiedStyle = null;
 
-$(document).ready(() => {
+$(document).ready(async () => {
     player = new Player();
     player.addEventListener('play', onPlay);
     player.addEventListener('stop', onStop);
@@ -39,24 +38,63 @@ $(document).ready(() => {
     player.addEventListener('resume', onResume);
     player.addEventListener('timeupdate', onTimeUpdate);
 
-    window.electronAPI.getSoundboardSize().then((size) => {
-        rows = size[0];
-        cols = size[1];
-        rowsInput.val(rows);
-        colsInput.val(cols);
+    sbSettings = await window.electronAPI.getSoundboardSettings();
 
-        createSoundboard();
+    window.electronAPI.getProfiles().then((p) => {
+        profiles = p;
+
+        const activeProfileName = profiles.find((p) => p.id === sbSettings.active_profile).name;
+
+        const profileSelect = $('#navProfileContainer');
+        profileSelect.append(`<span id="activeProfile">${activeProfileName}</span>`);
+        profileSelect.append(`<span class="material-symbols-rounded">expand_more</span>`);
+
+        profileSelect.click((e) => {
+            e.stopPropagation();
+            const items = [];
+
+            profiles.forEach((profile) => {
+                const item = {
+                    text: profile.name,
+                    data: profile.id,
+                    icon: profile.id === sbSettings.active_profile ? 'radio_button_checked' : 'radio_button_unchecked',
+                    submenu: [
+                        {
+                            text: 'Rename',
+                            callback: renameProfile
+                        },
+                        {
+                            text: 'Delete',
+                            classes: ['danger'],
+                            callback: deleteProfile
+                        }
+                    ],
+                    callback: changeProfile
+                }
+
+                if (profile.id === sbSettings.active_profile) item.classes = ['active'];
+
+                items.push(item);
+            });
+
+            items.push({classes: ['spacer']});
+            items.push({
+                text: 'New Profile',
+                icon: 'add',
+                callback: newProfile
+            });
+
+            const ctxMenu = showContextMenu(items, profileSelect.offset().left, profileSelect.offset().top + profileSelect.outerHeight() + 8);
+            ctxMenu.addClass('profiles-ctx-menu');
+        });
     });
 
-    window.electronAPI.getVolume().then((volume) => {
-        updateProgressValue(volumeSlider, volume);
-    });
+    updateProgressValue(volumeSlider, sbSettings.volume);
+    player.setOutputDevice(sbSettings.output_device);
 
-    window.electronAPI.getOutputDevice().then((deviceId) => {
-        player.setOutputDevice(deviceId);
-    });
+    //createSoundboard();
 
-    const rowsInput = $('#rows');
+    /*const rowsInput = $('#rows');
     const colsInput = $('#cols');
 
     rowsInput.change(() => {
@@ -69,7 +107,7 @@ $(document).ready(() => {
         cols = colsInput.val();
         window.electronAPI.setSoundboardSize([rows, cols]);
         createSoundboard();
-    });
+    });*/
 
     setProgressListener(progressBar, 'mousedown', () => {
         progressRangeMD = true;
@@ -98,7 +136,7 @@ $(document).ready(() => {
 
 // Listeners
 
-$(document).on('wheel', (e) => {
+/*$(document).on('wheel', (e) => {
     if (e.originalEvent.ctrlKey) {
         const buttons = $('.sb-btn');
 
@@ -109,7 +147,7 @@ $(document).on('wheel', (e) => {
         buttons.css('font-size', size + 'px');
         buttons.css('line-height', size + 'px');
     }
-});
+});*/
 
 stopBtn.click(() => {
     //TODO Now buttons are not disabled
@@ -145,14 +183,12 @@ playlistBtn.click(() => {
 mediaOutputBtn.click(async () => {
     const items = [];
 
-    const selectedOutputDevice = (await window.electronAPI.getSettings()).output_device;
     const devices = await navigator.mediaDevices.enumerateDevices();
     devices.forEach((device) => {
         if (device.kind !== 'audiooutput') return;
-
         if (device.deviceId === 'default' || device.deviceId === 'communications') return;
 
-        const selected = device.deviceId === selectedOutputDevice;
+        const selected = device.deviceId === sbSettings.output_device;
 
         const item = {
             text: device.label,
@@ -160,7 +196,6 @@ mediaOutputBtn.click(async () => {
             icon: selected ? 'done' : 'volume_up',
             callback: changeAudioOutput
         };
-
         if (selected) item.classes = ['active'];
 
         items.push(item);
@@ -227,10 +262,6 @@ window.electronAPI.handleButtonSwap((event, button1, button2, row1, col1, row2, 
     isDragging = false;
 });
 
-window.electronAPI.handleOutputDevice((event, deviceId) => {
-    player.setOutputDevice(deviceId);
-});
-
 window.electronAPI.handlePlayNow(async (event, track) => {
     if (track.uri.startsWith('https')) {
         if (track.url == null) return;
@@ -239,17 +270,29 @@ window.electronAPI.handlePlayNow(async (event, track) => {
     player.play(track, null, track.duration * 1000);
 });
 
+window.electronAPI.handleMediaPlayPause(() => player.playPause());
+
+window.electronAPI.handleMediaStop(() => player.stop());
+
+window.electronAPI.handleMediaNext(() => {
+    //TODO
+});
+
+window.electronAPI.handleMediaPrev(() => {
+    //TODO
+});
+
 // Soundboard generation
 
 function createSoundboard() {
     const soundboard = $('#soundboard');
     soundboard.empty();
 
-    soundboard.css('grid-template-rows', 'repeat(' + rows + ', 1fr)');
-    soundboard.css('grid-template-columns', 'repeat(' + cols + ', 1fr)');
+    soundboard.css('grid-template-rows', 'repeat(' + sbSettings.rows + ', 1fr)');
+    soundboard.css('grid-template-columns', 'repeat(' + sbSettings.cols + ', 1fr)');
 
-    for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
+    for (let row = 0; row < sbSettings.rows; row++) {
+        for (let col = 0; col < sbSettings.cols; col++) {
             const btn = $(`<div id="btn-${row}-${col}" class="sb-btn" data-row="${row}" data-col="${col}"></div>`);
             btn.append($(`<div class="sb-btn-img">`));
             btn.append($(`<span class="sb-btn-title">Button ${row + 1} . ${col + 1}</span>`));
@@ -268,10 +311,7 @@ function createSoundboard() {
 }
 
 function fillSoundboard() {
-    window.electronAPI.getButtons().then((btns) => {
-        buttons = btns;
-        buttons.forEach(fillButton);
-    });
+    sbSettings.buttons.forEach(fillButton);
 
     $('.sb-btn').draggable({
         scroll: false,
@@ -605,5 +645,26 @@ function testPlayback(ctxItem) {
         await audio.play();
     });
 
+    return true;
+}
+
+// Profiles
+function changeProfile(ctxItem) {
+    console.log(ctxItem.html());
+    return true;
+}
+
+function newProfile(ctxItem) {
+    console.log(ctxItem.html());
+    return true;
+}
+
+function renameProfile(ctxItem, parentItem) {
+    console.log(ctxItem.html(), parentItem.html());
+    return true;
+}
+
+function deleteProfile(ctxItem, parentItem) {
+    console.log(ctxItem.html(), parentItem.html());
     return true;
 }

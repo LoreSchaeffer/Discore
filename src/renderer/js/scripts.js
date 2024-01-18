@@ -8,6 +8,7 @@ let contextMenu;
 const nav = $(`<nav class="navbar navbar-expand navbar-dark background-tertiary fixed-top">
     <div class="container-fluid" id="navbarSupportedContent">
         <span id="navTitle">Discore</span>
+        <div id="navProfileContainer"></div>
         <ul id="navRightGroup" class="navbar-nav">
             <li id="navMinimize" class="nav-item"><span class="material-symbols-rounded">remove</span></li>
             <li id="navMaximize" class="nav-item"><span class="material-symbols-rounded">check_box_outline_blank</span></li>
@@ -106,7 +107,7 @@ $(document).ready(() => {
  *   {
  *     text: string,
  *     icon: class (optional),
- *     classes: [](spacer, danger, disabled, submenu-toggle ...) (optional),
+ *     classes: [](spacer, danger, disabled, ...) (optional),
  *     callback: function (optional,
  *     submenu: [](optional),
  *     data: string (optional)
@@ -133,22 +134,23 @@ function showContextMenu(items, posX, posY) {
             if (item.icon) ctxItem.prepend($(`<span class="material-symbols-rounded">${item.icon}</span>`));
             if (item.data) ctxItem.attr('data-value', item.data);
 
-            if (item.classes != null && item.classes.includes('submenu-toggle')) {
+            if (item.submenu) {
                 ctxItem.attr('data-target', 'submenu-' + i);
-                ctxItem.append($('<span class="material-symbols-rounded">chevron_right</span>'));
+                ctxItem.append($('<span class="material-symbols-rounded chevron">chevron_right</span>'));
 
                 const submenu = $(`<div id="submenu-${i}" class="context-menu submenu"><ul></ul></div>`);
 
                 for (const subItem of item.submenu) {
                     const subClasses = subItem.classes ? subItem.classes.join(' ') : '';
-                    const subCtxItem = $(`<li class="ctx-item${subClasses !== '' ? ' ' + subClasses : ''}">${subItem.text}</li>`);
+                    const subCtxItem = $(`<li class="ctx-item ctx-subitem${subClasses !== '' ? ' ' + subClasses : ''}">${subItem.text}</li>`);
 
                     if (subItem.icon) subCtxItem.prepend($(`<span class="material-symbols-rounded">${subItem.icon}</span>`));
 
                     subCtxItem.click(() => {
                         if (subCtxItem.hasClass('disabled')) return;
                         if (subItem.callback) {
-                            if (subItem.callback(subCtxItem)) return;
+                            const parentItem = ctxMenu.find(`li[data-target="submenu-${i}"]`);
+                            if (subItem.callback(subCtxItem, parentItem)) return;
                         }
                         submenu.remove();
                     });
@@ -173,12 +175,11 @@ function showContextMenu(items, posX, posY) {
                 submenus.push([ctxItem, submenu]);
             }
 
-            ctxItem.click((e) => {
+            ctxItem.click(() => {
                 if (ctxItem.hasClass('disabled')) return;
-                if (ctxItem.hasClass('submenu-toggle')) return;
+                if (ctxItem.hasClass('ctx-subitem')) return;
                 if (item.callback) {
                     if (item.callback(ctxItem)) return;
-                    console.log('callback returned true');
                 }
                 ctxMenu.remove();
             });

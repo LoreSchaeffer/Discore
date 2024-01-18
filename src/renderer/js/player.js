@@ -72,7 +72,7 @@ const Player = class {
     }
 
     setOutputDevice(deviceId) {
-        this.audio.setSinkId(deviceId);
+        this.audio.setSinkId(deviceId).catch((e) => {});
     }
 
     timeupdate() {

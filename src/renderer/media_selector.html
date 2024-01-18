@@ -9,16 +9,31 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="libs/bootstrap/css/bootstrap.min.css">
-
     <link rel="stylesheet" href="css/styles.css"/>
-    <link rel="stylesheet" href="css/menu.css"/>
+    <link rel="stylesheet" href="css/media_selector.css"/>
 </head>
 <body>
 <div id="mainContainer" class="container-fluid">
-    <div class="input-row">
-        <label for="audioOutput" class="form-label">Output Device</label>
-        <select id="audioOutput" class="form-select"></select>
-        <a id="testAudio" role="button" class="btn text-white" style="background-color: var(--primary);" href="#"><i class="fa-solid fa-play"></i></a>
+    <div id="formContainer">
+        <div id="inputRow" class="input-row">
+            <div class="form-outline">
+                <input type="text" id="uri" class="form-control form-control-sm" />
+                <label class="form-label" for="uri">File or Url</label>
+            </div>
+            <a id="openFile" role="button" class="btn text-white" style="background-color: var(--primary);" href="#"><i class="fa-solid fa-folder"></i></a>
+        </div>
+    </div>
+    <div id="searchContainer">
+        <div class="input-row">
+            <div class="form-outline">
+                <input type="text" id="search" class="form-control form-control-sm" />
+                <label class="form-label" for="search">Search</label>
+            </div>
+            <a id="searchBtn" role="button" class="btn text-white" style="background-color: var(--primary);" href="#"><i class="fa-solid fa-search"></i></a>
+        </div>
+        <div id="results">
+            <p id="resultsPlaceholder">Perform a search to see the results ...</p>
+        </div>
     </div>
     <div id="buttons">
         <a id="discard" role="button" class="btn text-white" style="background-color: var(--red);" href="#"><i class="fa-solid fa-x"></i></a>
@@ -29,6 +44,6 @@
 <script src="libs/js/jquery-3.7.1.min.js"></script>
 <script src="libs/bootstrap/js/bootstrap.min.js"></script>
 <script src="js/scripts.js"></script>
-<script src="js/menu.js"></script>
+<script src="js/media_selector.js"></script>
 </body>
 </html>

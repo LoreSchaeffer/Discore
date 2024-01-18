@@ -1,9 +1,9 @@
 {
-  "name": "esoundboard",
-  "productName": "esoundboard",
+  "name": "discore",
+  "productName": "Discore",
   "version": "1.0.0",
-  "description": "My Electron application description",
-  "main": "src/index.js",
+  "description": "Discore Soundboard",
+  "main": "src/main/main.js",
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
@@ -14,14 +14,16 @@
   "keywords": [],
   "author": {
     "name": "LoreSchaeffer",
-    "email": "lm.lorenzo@outlook.it"
+    "email": "lorenzo.multicore.network"
   },
   "license": "MIT",
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
     "jquery": "^3.7.1",
     "music-metadata": "^7.14.0",
-    "play-dl": "^1.9.7"
+    "play-dl": "^1.9.7",
+    "sqlite3": "^5.1.7",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.2.0",

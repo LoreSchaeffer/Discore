@@ -528,9 +528,10 @@ body {
     color: var(--white);
 }
 
-.context-menu .fa-chevron-right {
+.context-menu .chevron {
     justify-self: flex-end;
     margin-left: auto;
+    margin-right: 0;
     font-size: 75%;
     font-weight: 600;
 }
