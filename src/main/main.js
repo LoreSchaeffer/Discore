@@ -1,5 +1,4 @@
 const {app, BrowserWindow, ipcMain, shell, dialog, globalShortcut} = require('electron');
-const {v4: uuidv4} = require('uuid');
 const {video_basic_info} = require('play-dl');
 const path = require('path');
 const play = require('play-dl');
@@ -54,6 +53,8 @@ const startApp = () => {
     });
 };
 
+/* === App Events === */
+
 app.on('ready', startApp);
 
 app.on('window-all-closed', () => {
@@ -74,6 +75,7 @@ app.on('will-quit', () => {
 });
 
 /* === IPC === */
+
 // Navbar
 ipcMain.on('minimize', (event, winId) => {
     if (winId === -1) mainWindow.minimize();
@@ -98,14 +100,27 @@ ipcMain.on('close', (event, winId) => {
     }
 });
 
+
 // Windows
 ipcMain.on('open_browser', async (event, url) => {
     await shell.openExternal(url);
 });
 
-ipcMain.on('open_media_selector', (event, row, col, winId) => {
-    openModal(windows[winId], 500, 600, false, 'media_selector.html', (modal) => {
-        modal.webContents.send('rc', row, col);
+ipcMain.on('open_media_selector', (event, profile, row, col, winId) => {
+    openModal(windows[winId], 500, 600, false, 'media_selector.html', async (modal) => {
+        let button = await DB.getButton(profile, row, col);
+
+        if (button == null) {
+            button = {
+                row: row,
+                col: col,
+                profile: profile
+            };
+
+            modal.webContents.send('button', button, true);
+        } else {
+            modal.webContents.send('button', button, false);
+        }
     });
 });
 
@@ -117,7 +132,7 @@ ipcMain.handle('open_file_media_selector', async (event) => {
     });
 });
 
-ipcMain.on('open_button_settings', (event, row, col) => {
+ipcMain.on('open_button_settings', (event, profile, row, col) => {
     openModal(mainWindow, 500, 600, false, 'button_settings.html', (modal) => {
         modal.webContents.send('rc', row, col);
         modal.webContents.send('button', CONFIG.getButton(row, col));
@@ -128,18 +143,11 @@ ipcMain.on('open_play_now_window', (event) => {
     openModal(mainWindow, 500, 600, false, 'media_selector.html');
 });
 
-ipcMain.on('close_window', (event, winId) => {
-    if (winId === -1) return;
-    windows[winId].close();
-    delete windows[winId]
-});
 
 // Settings
 ipcMain.handle('get_soundboard_settings', () => {
     const settings = {};
 
-    settings.rows = CONFIG.config.rows;
-    settings.columns = CONFIG.config.columns;
     settings.volume = CONFIG.config.volume;
     settings.output_device = CONFIG.config.output_device;
     settings.active_profile = CONFIG.config.active_profile;
@@ -163,22 +171,25 @@ ipcMain.on('set_media_output', (event, device) => {
     CONFIG.save();
 });
 
+ipcMain.handle('set_active_profile', (event, profile) => {
+    CONFIG.config.active_profile = profile;
+    CONFIG.save();
+
+    return DB.getProfile(profile);
+});
+
+
 // Profiles
 ipcMain.handle('get_profiles', () => {
     return DB.getProfiles();
 });
 
-ipcMain.on('set_active_profile', (event, profile) => {
-    CONFIG.config.active_profile = profile;
-    CONFIG.save();
-});
-
 ipcMain.handle('create_profile', (event, name) => {
     return new Promise((resolve, reject) => {
-        DB.createProfile(name).then((id) => {
-            CONFIG.config.active_profile = id;
+        DB.createProfile(name).then((profile) => {
+            CONFIG.config.active_profile = profile.id;
             CONFIG.save();
-            resolve({id: id, name: name});
+            resolve(profile);
         }).catch(() => {
             reject(false);
         });
@@ -206,57 +217,76 @@ ipcMain.handle('delete_profile', (event, id) => {
     });
 });
 
+
 // Buttons
-ipcMain.handle('get_buttons', () => {
-    return CONFIG.buttons;
+ipcMain.handle('get_buttons', (event, profile) => {
+    return DB.getButtons(profile);
 });
 
-ipcMain.handle('get_button', (event, row, col) => {
-    return CONFIG.getButton(row, col);
+ipcMain.handle('get_button', (event, profile, row, col) => {
+    return DB.getButton(profile, row, col);
+});
+
+ipcMain.on('set_button', (event, profile, button) => {
+    DB.addButton(profile, button);
+});
+
+ipcMain.on('update_button', (event, profile, button) => {
+    DB.updateButton(profile, button);
+});
+
+ipcMain.on('swap_buttons', (event, profile, row1, col1, row2, col2) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const buttons = await DB.getButtons(profile);
+
+            const button1 = buttons.find((button) => button.row === row1 && button.col === col1);
+            const button2 = buttons.find((button) => button.row === row2 && button.col === col2);
+
+            if (button1 != null) {
+                button1.row = row2;
+                button1.col = col2;
+                await DB.updateButton(profile, button1);
+            }
+
+            if (button2 != null) {
+                button2.row = row1;
+                button2.col = col1;
+                await DB.updateButton(profile, button2);
+            }
+
+            resolve([button1, button2]);
+        } catch (e) {
+            reject(e);
+        }
+    });
 });
 
 
-/*ipcMain.handle('get_soundboard_size', () => {
-    return [CONFIG.config.rows, CONFIG.config.columns];
-});
-
-ipcMain.on('set_soundboard_size', (event, size) => {
-    CONFIG.config.rows = size[0];
-    CONFIG.config.columns = size[1];
-    CONFIG.save();
-});
-
-ipcMain.handle('get_volume', () => {
-    return CONFIG.config.volume;
-});
-
-ipcMain.on('set_volume', (event, volume) => {
-    CONFIG.config.volume = volume;
-    CONFIG.save();
-});
-
-ipcMain.handle('get_buttons', () => {
-    return CONFIG.buttons;
-});
-
-ipcMain.handle('search', async (event, query) => {
+// Misc
+ipcMain.handle('search', (event, query) => {
     if (query == null || query.trim() === '') return [];
 
     try {
-        return (await play.search(query, {limit: 20})).map((info) => {
-            return {
-                title: info.title,
-                uri: info.url,
-                duration: info.durationInSec,
-                thumbnail: info.thumbnails[0].url
-            }
-        });
+        return new Promise(async (resolve, reject) => {
+            const videos = await play.search(query, {limit: 20});
+
+            resolve(videos.map((video) => {
+                return {
+                    title: video.title,
+                    uri: video.url,
+                    duration: video.durationInSec,
+                    thumbnail: video.thumbnails[0].url
+                }
+            }));
+        })
     } catch (e) {
-        console.error(e);
         return [];
     }
 });
 
+
+/*
 ipcMain.on('play_now', async (event, winId, uri, track) => {
     if (winId === null) {
         CONFIG.removeButton(row, col);
@@ -367,30 +397,6 @@ ipcMain.on('set_button', async (event, winId, row, col, uri, track) => {
     mainWindow.webContents.send('button_update', button);
 });
 
-ipcMain.on('swap_buttons', async (event, row1, col1, row2, col2) => {
-    const button1 = CONFIG.getButton(row1, col1);
-    const button2 = CONFIG.getButton(row2, col2);
-
-    CONFIG.removeButton(row1, col1);
-    CONFIG.removeButton(row2, col2);
-
-    if (button1 != null) {
-        button1.row = row2;
-        button1.col = col2;
-        CONFIG.addButton(button1);
-    }
-
-    if (button2 != null) {
-        button2.row = row1;
-        button2.col = col1;
-        CONFIG.addButton(button2);
-    }
-
-    CONFIG.saveButtons();
-
-    mainWindow.webContents.send('button_swap', button1, button2, row1, col1, row2, col2);
-});
-
 ipcMain.handle('get_new_url', async (event, row, col) => {
     const button = CONFIG.getButton(row, col);
     if (button == null) return null;
@@ -406,10 +412,6 @@ ipcMain.handle('get_new_url', async (event, row, col) => {
     }
 });
 
-ipcMain.handle('get_output_device', () => {
-    return CONFIG.config.settings.output_device != null ? CONFIG.config.settings.output_device : 'default';
-});
-
 ipcMain.on('update_button', (event, winId, button) => {
     if (winId != null) {
         windows[winId].close();
@@ -422,7 +424,8 @@ ipcMain.on('update_button', (event, winId, button) => {
     mainWindow.webContents.send('button_update', button);
 });*/
 
-// Functions
+
+/* === Functions === */
 
 function registerGlobalShortcuts() {
     globalShortcut.register('MediaPlayPause', () => {
@@ -442,10 +445,6 @@ function registerGlobalShortcuts() {
     });
 }
 
-function randomUUID() {
-    return uuidv4();
-}
-
 function initConfigs() {
     const result = CONFIG.init();
     if (result) {
@@ -462,6 +461,11 @@ function initConfigs() {
                 console.error(e);
                 app.quit();
             });
+        } else {
+            if (profiles.findIndex((profile) => profile.id === CONFIG.config.active_profile) === -1) {
+                CONFIG.config.active_profile = profiles[0].id;
+                CONFIG.save();
+            }
         }
     }).catch((e) => {
         console.error(e);

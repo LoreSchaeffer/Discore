@@ -1,3 +1,4 @@
+const soundboard = $('#soundboard');
 const trackInfo = $('#trackInfo');
 const thumbnail = $('#thumbnail');
 const trackName = $('#trackName');
@@ -21,13 +22,17 @@ const volumeSlider = $('#volumeSlider');
 const settingsBtn = $('#settings');
 
 let sbSettings = null;
+let profile = null;
 let player;
 
 let progressRangeMD = false;
 let isDragging = false;
 let dragSuccess = null;
 
+let copiedButton = null;
 let copiedStyle = null;
+
+/* READY */
 
 $(document).ready(async () => {
     player = new Player();
@@ -40,44 +45,26 @@ $(document).ready(async () => {
     sbSettings = await window.electronAPI.getSoundboardSettings();
 
     window.electronAPI.getProfiles().then((profiles) => {
-        const activeProfileName = profiles.find((p) => p.id === sbSettings.active_profile).name;
+        profile = profiles.find((p) => p.id === sbSettings.active_profile);
 
         const profileSelect = $('#navProfileContainer');
-        profileSelect.append(`<span id="activeProfile">${activeProfileName}</span>`);
+        profileSelect.append(`<span id="activeProfile">${profile.name}</span>`);
         profileSelect.append(`<span class="material-symbols-rounded">expand_more</span>`);
-
         profileSelect.click((e) => showProfileMenu(e));
+
+        generateSoundboard();
     });
 
     updateProgressValue(volumeSlider, sbSettings.volume);
     player.setOutputDevice(sbSettings.output_device);
 
-    //createSoundboard();
-
-    /*const rowsInput = $('#rows');
-    const colsInput = $('#cols');
-
-    rowsInput.change(() => {
-        rows = rowsInput.val();
-        window.electronAPI.setSoundboardSize([rows, cols]);
-        createSoundboard();
-    });
-
-    colsInput.change(() => {
-        cols = colsInput.val();
-        window.electronAPI.setSoundboardSize([rows, cols]);
-        createSoundboard();
-    });*/
-
     setProgressListener(progressBar, 'mousedown', () => {
         progressRangeMD = true;
     });
-
     setProgressListener(progressBar, 'mouseup', () => {
         progressRangeMD = false;
         player.seekTo(progressBar.attr('aria-valuenow'));
     });
-
     setProgressListener(volumeSlider, 'input', () => {
         const volume = volumeSlider.attr('aria-valuenow');
         player.setVolume(volume);
@@ -94,20 +81,7 @@ $(document).ready(async () => {
     });
 });
 
-// Listeners
-
-/*$(document).on('wheel', (e) => {
-    if (e.originalEvent.ctrlKey) {
-        const buttons = $('.sb-btn');
-
-        let size = parseInt(buttons.css('font-size'));
-        if (e.originalEvent.deltaY < 0) size++;
-        else size--;
-
-        buttons.css('font-size', size + 'px');
-        buttons.css('line-height', size + 'px');
-    }
-});*/
+/* LISTENERS */
 
 stopBtn.click(() => {
     //TODO Now buttons are not disabled
@@ -140,40 +114,7 @@ playlistBtn.click(() => {
     //TODO
 });
 
-mediaOutputBtn.click(async () => {
-    const items = [];
-
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    devices.forEach((device) => {
-        if (device.kind !== 'audiooutput') return;
-        if (device.deviceId === 'default' || device.deviceId === 'communications') return;
-
-        const selected = device.deviceId === sbSettings.output_device;
-
-        const item = {
-            text: device.label,
-            data: device.deviceId,
-            icon: selected ? 'done' : 'volume_up',
-            callback: changeAudioOutput
-        };
-        if (selected) item.classes = ['active'];
-
-        items.push(item);
-    });
-
-    items.push({classes: ['spacer']});
-
-    items.push({
-        text: 'Test Playback',
-        icon: 'play_arrow',
-        callback: testPlayback
-    });
-
-    const ctxMenu = showContextMenu(items, 0, 0);
-    ctxMenu.addClass('media-output-ctx-menu');
-    ctxMenu.css('left', `calc(100% - ${ctxMenu.outerWidth() + 8}px)`);
-    ctxMenu.css('top', (mediaOutputBtn.offset().top - ctxMenu.outerHeight() - 8) + 'px');
-});
+mediaOutputBtn.click(showAudioOutputMenu);
 
 volumeBtn.click(() => {
     // TODO volume_off <-> volume
@@ -183,44 +124,9 @@ settingsBtn.click(() => {
     //TODO
 });
 
+/* IPC LISTENERS */
 
-// Electron listeners
-
-window.electronAPI.handleButtonUpdate((event, button) => {
-    const index = buttons.findIndex((btn) => btn.row === button.row && btn.col === button.col);
-    if (index !== -1) buttons[index] = button;
-    else buttons.push(button);
-    fillButton(button);
-});
-
-window.electronAPI.handleButtonSwap((event, button1, button2, row1, col1, row2, col2) => {
-    const index1 = buttons.findIndex((btn) => btn.row === row1 && btn.col === col1);
-    const index2 = buttons.findIndex((btn) => btn.row === row2 && btn.col === col2);
-
-    if (index1 !== -1) {
-        buttons.splice(index1, 1);
-    }
-
-    if (index2 !== -1) {
-        buttons.splice(index2, 1);
-    }
-
-    if (button1 != null) {
-        buttons.push(button1);
-        fillButton(button1);
-    } else {
-        resetButton(row2, col2);
-    }
-
-    if (button2 != null) {
-        buttons.push(button2);
-        fillButton(button2);
-    } else {
-        resetButton(row1, col1);
-    }
-
-    isDragging = false;
-});
+window.electronAPI.handleButtonUpdate((event, button) => fillButton(button));
 
 window.electronAPI.handlePlayNow(async (event, track) => {
     if (track.uri.startsWith('https')) {
@@ -242,88 +148,61 @@ window.electronAPI.handleMediaPrev(() => {
     //TODO
 });
 
-// Soundboard generation
+/* SOUNDBOARD GENERATION */
 
-function createSoundboard() {
-    const soundboard = $('#soundboard');
+function generateSoundboard() {
+    let buttons = $('.sb-btn');
+    buttons.unbind('click');
+    buttons.unbind('contextmenu');
+
     soundboard.empty();
 
-    soundboard.css('grid-template-rows', 'repeat(' + sbSettings.rows + ', 1fr)');
-    soundboard.css('grid-template-columns', 'repeat(' + sbSettings.cols + ', 1fr)');
+    soundboard.css('grid-template-rows', 'repeat(' + profile.rows + ', 1fr)');
+    soundboard.css('grid-template-columns', 'repeat(' + profile.columns + ', 1fr)');
 
-    for (let row = 0; row < sbSettings.rows; row++) {
-        for (let col = 0; col < sbSettings.cols; col++) {
-            const btn = $(`<div id="btn-${row}-${col}" class="sb-btn" data-row="${row}" data-col="${col}"></div>`);
-            btn.append($(`<div class="sb-btn-img">`));
-            btn.append($(`<span class="sb-btn-title">Button ${row + 1} . ${col + 1}</span>`));
-
-            btn.find('.sb-btn-img').css('background-image', 'url("images/track.png")');
-
-            soundboard.append(btn);
+    for (let row = 0; row < profile.rows; row++) {
+        for (let col = 0; col < profile.columns; col++) {
+            setEmptyButton(row, col);
         }
     }
 
-    const sbBtn = $('.sb-btn');
-    sbBtn.click(sbLeftClick);
-    sbBtn.contextmenu(sbRightClick);
+    buttons = $('.sb-btn');
+    buttons.click(sbLeftClick);
+    buttons.contextmenu(sbRightClick);
 
     fillSoundboard();
 }
 
 function fillSoundboard() {
-    sbSettings.buttons.forEach(fillButton);
+    window.electronAPI.getButtons(profile.id).then((buttons) => {
+        buttons.forEach(fillButton);
 
-    $('.sb-btn').draggable({
-        scroll: false,
-        revert: true,
-        revertDuration: 0,
-        snap: true,
-        snapMode: 'inner',
-        snapTolerance: 10,
-        stack: '.sb-btn',
-        start: function () {
-            isDragging = true;
-            dragSuccess = false;
-        },
-        stop: function (event, ui) {
-            if (!dragSuccess) isDragging = false;
-            dragSuccess = null;
-        }
-    }).droppable({
-        accept: '.sb-btn',
-        hoverClass: 'dropping',
-        tolerance: 'pointer',
-        drop: function (e, ui) {
-            dragSuccess = true;
-
-            const draggable = ui.draggable;
-            const draggableRow = parseInt(draggable.attr('data-row'));
-            const draggableCol = parseInt(draggable.attr('data-col'));
-            const draggableButton = getButton(draggableRow, draggableCol);
-
-            const droppable = $(this);
-            const droppableRow = parseInt(droppable.attr('data-row'));
-            const droppableCol = parseInt(droppable.attr('data-col'));
-            const droppableButton = getButton(droppableRow, droppableCol);
-
-            if (draggableButton == null && droppableButton == null) {
-                return;
-            } else if (draggableButton == null && droppableButton != null) {
-                droppableButton.row = draggableRow;
-                droppableButton.col = draggableCol;
-            } else if (draggableButton != null && droppableButton == null) {
-                draggableButton.row = droppableRow;
-                draggableButton.col = droppableCol;
-            } else if (draggableButton != null && droppableButton != null) {
-                draggableButton.row = droppableRow;
-                draggableButton.col = droppableCol;
-
-                droppableButton.row = draggableRow;
-                droppableButton.col = draggableCol;
+        $('.sb-btn').draggable({
+            scroll: false,
+            revert: true,
+            revertDuration: 0,
+            snap: true,
+            snapMode: 'inner',
+            snapTolerance: 10,
+            stack: '.sb-btn',
+            start: function () {
+                isDragging = true;
+                dragSuccess = false;
+            },
+            stop: function () {
+                if (!dragSuccess) isDragging = false;
+                dragSuccess = null;
             }
+        }).droppable({
+            accept: '.sb-btn',
+            hoverClass: 'dropping',
+            tolerance: 'pointer',
+            drop: function (e, ui) {
+                dragSuccess = true;
 
-            window.electronAPI.swapButtons(draggableRow, draggableCol, droppableRow, droppableCol);
-        }
+                swapButtons(ui.draggable, $(this));
+            }
+        });
     });
 }
 
@@ -351,65 +230,82 @@ function fillButton(button) {
     });
 }
 
-function resetButton(row, col) {
-    const btnElement = $(`#btn-${row}-${col}`);
-    const btnText = btnElement.find('.sb-btn-title');
+function setEmptyButton(row, col) {
+    let btn = $(`#btn-${row}-${col}`);
+    let icon = btn.find('.sb-btn-img');
+    let text = btn.find('.sb-btn-title');
+    const reset = btn.length !== 0;
 
-    btnText.text(`Button ${row + 1} . ${col + 1}`);
+    const buttonTitle = `Button ${row + 1} . ${col + 1}`;
 
-    btnElement.css('background-color', '');
-    btnElement.css('border-color', '');
-    btnText.css('color', '');
+    if (!reset) {
+        btn = $(`<div id="btn-${row}-${col}" class="sb-btn" data-row="${row}" data-col="${col}"></div>`);
+        icon = $('<div class="sb-btn-img">');
+        text = $(`<span class="sb-btn-title"></span>`);
+
+        btn.append(icon);
+        btn.append(text);
+        soundboard.append(btn);
+    }
+
+    icon.css('background-image', 'url("images/track.png")');
+    text.text(buttonTitle);
+    btn.css('background-color', '');
+    btn.css('border-color', '');
+    text.css('color', '');
 }
+
+/* BUTTON EVENTS */
 
 async function sbLeftClick() {
-    const btn = $(this);
-    const row = parseInt(btn.attr('data-row'));
-    const col = parseInt(btn.attr('data-col'));
-
-    if (isDragging) return;
-
-    const button = getButton(row, col);
+    const button = await window.electronAPI.getButton(profile.id, parseInt($(this).attr('data-row')), parseInt($(this).attr('data-col')));
     if (button == null) return;
 
-    const track = button.track;
+    //TODO
 
-    if (track.uri.startsWith('https')) {
-        if (track.url == null) {
-            button.track.url = await window.electronAPI.getNewUrl(row, col);
-            if (button.track.url == null) return;
-        }
-    }
-
-    let startTime = button.start_time;
-    if (startTime) {
-        if (button.start_time_unit === 's') startTime *= 1000;
-        else if (button.start_time === 'm') startTime *= 60000;
-    }
-
-    let endTime = button.end_time;
-    if (endTime) {
-        if (button.end_time_unit === 's') endTime *= 1000;
-        else if (button.end_time === 'm') endTime *= 60000;
-
-        if (button.end_type === 'after') endTime = startTime + endTime;
-    }
-
-    player.play(button.track, startTime, endTime).catch(async (e) => {
-        if (button.track.uri.startsWith('https')) {
-            const newUrl = await window.electronAPI.getNewUrl(row, col);
-            if (newUrl) {
-                button.track.url = newUrl;
-                player.play(button.track).catch((e) => {
-                    console.log('Failed to get a new url');
-                });
-            }
-        }
-    });
-}
-
-function getButton(row, col) {
-    return buttons.find((btn) => btn.row === row && btn.col === col);
+    // const btn = $(this);
+    // const row = parseInt(btn.attr('data-row'));
+    // const col = parseInt(btn.attr('data-col'));
+    //
+    // if (isDragging) return;
+    //
+    // const button = getButton(row, col);
+    // if (button == null) return;
+    //
+    // const track = button.track;
+    //
+    // if (track.uri.startsWith('https')) {
+    //     if (track.url == null) {
+    //         button.track.url = await window.electronAPI.getNewUrl(row, col);
+    //         if (button.track.url == null) return;
+    //     }
+    // }
+    //
+    // let startTime = button.start_time;
+    // if (startTime) {
+    //     if (button.start_time_unit === 's') startTime *= 1000;
+    //     else if (button.start_time === 'm') startTime *= 60000;
+    // }
+    //
+    // let endTime = button.end_time;
+    // if (endTime) {
+    //     if (button.end_time_unit === 's') endTime *= 1000;
+    //     else if (button.end_time === 'm') endTime *= 60000;
+    //
+    //     if (button.end_type === 'after') endTime = startTime + endTime;
+    // }
+    //
+    // player.play(button.track, startTime, endTime).catch(async (e) => {
+    //     if (button.track.uri.startsWith('https')) {
+    //         const newUrl = await window.electronAPI.getNewUrl(row, col);
+    //         if (newUrl) {
+    //             button.track.url = newUrl;
+    //             player.play(button.track).catch((e) => {
+    //                 console.log('Failed to get a new url');
+    //             });
+    //         }
+    //     }
+    // });
 }
 
 function sbRightClick(e) {
@@ -427,6 +323,18 @@ function sbRightClick(e) {
         {
             text: 'Settings',
             callback: () => ctxSettings(row, col)
+        },
+        {
+            classes: ['spacer']
+        },
+        {
+            text: 'Copy Button',
+            callback: () => ctxCopyButton(row, col)
+        },
+        {
+            text: 'Paste Button',
+            classes: (copiedButton == null ? ['disabled'] : []),
+            callback: () => ctxPasteButton(row, col)
         },
         {
             classes: ['spacer']
@@ -453,59 +361,96 @@ function sbRightClick(e) {
     showContextMenu(items, e.pageX, e.pageY);
 }
 
-// Context menu callbacks
+/* CTX MENU CALLBACKS */
 
 function ctxChooseFile(row, col) {
-    window.electronAPI.openMediaSelector(row, col, winId);
+    window.electronAPI.openMediaSelector(profile.id, row, col, winId);
 }
 
 function ctxSettings(row, col) {
-    window.electronAPI.openButtonSettings(row, col);
+    window.electronAPI.openButtonSettings(profile.id, row, col);
 }
 
-function ctxCopyStyle(row, col) {
-    const button = getButton(row, col);
+async function ctxCopyButton(row, col) {
+    const button = await window.electronAPI.getButton(profile.id, row, col);
+    if (button == null) return;
+
+    copiedButton = {
+        btn_title: button.btn_title,
+        txt_color: button.txt_color,
+        txt_h_color: button.txt_h_color,
+        bg_color: button.bg_color,
+        bg_h_color: button.bg_h_color,
+        brd_color: button.brd_color,
+        brd_h_color: button.brd_h_color,
+        title: button.title,
+        uri: button.uri,
+        url: button.url,
+        duration: button.duration,
+        thumbnail: button.thumbnail
+    }
+}
+
+async function ctxPasteButton(row, col) {
+    if (copiedButton == null) return;
+
+    const button = await window.electronAPI.getButton(profile.id, row, col);
+    if (button == null) return;
+
+    button.btn_title = copiedButton.btn_title;
+    button.txt_color = copiedButton.txt_color;
+    button.txt_h_color = copiedButton.txt_h_color;
+    button.bg_color = copiedButton.bg_color;
+    button.bg_h_color = copiedButton.bg_h_color;
+    button.brd_color = copiedButton.brd_color;
+    button.brd_h_color = copiedButton.brd_h_color;
+    button.title = copiedButton.title;
+    button.uri = copiedButton.uri;
+    button.url = copiedButton.url;
+    button.duration = copiedButton.duration;
+    button.thumbnail = copiedButton.thumbnail;
+
+    fillButton(button);
+    window.electronAPI.updateButton(profile.id, button);
+}
+
+async function ctxCopyStyle(row, col) {
+    const button = await window.electronAPI.getButton(profile.id, row, col);
     if (button == null) return;
 
     copiedStyle = {
-        background_color: button.background_color,
-        border_color: button.border_color,
-        text_color: button.text_color,
-        background_hover_color: button.background_hover_color,
-        border_hover_color: button.border_hover_color,
-        text_hover_color: button.text_hover_color
+        txt_color: button.txt_color,
+        txt_h_color: button.txt_h_color,
+        bg_color: button.bg_color,
+        bg_h_color: button.bg_h_color,
+        brd_color: button.brd_color,
+        brd_h_color: button.brd_h_color,
     };
 }
 
-function ctxPasteStyle(row, col) {
-    const button = getButton(row, col);
-    if (button == null) return;
+async function ctxPasteStyle(row, col) {
     if (copiedStyle == null) return;
 
-    button.background_color = copiedStyle.background_color;
-    button.border_color = copiedStyle.border_color;
-    button.text_color = copiedStyle.text_color;
-    button.background_hover_color = copiedStyle.background_hover_color;
-    button.border_hover_color = copiedStyle.border_hover_color;
-    button.text_hover_color = copiedStyle.text_hover_color;
+    const button = await window.electronAPI.getButton(profile.id, row, col);
+    if (button == null) return;
 
-    window.electronAPI.updateButton(null, button);
+    button.txt_color = copiedStyle.txt_color;
+    button.txt_h_color = copiedStyle.txt_h_color;
+    button.bg_color = copiedStyle.bg_color;
+    button.bg_h_color = copiedStyle.bg_h_color;
+    button.brd_color = copiedStyle.brd_color;
+    button.brd_h_color = copiedStyle.brd_h_color;
+
+    fillButton(button);
+    window.electronAPI.updateButton(profile.id, button);
 }
 
 function ctxClear(row, col) {
-    window.electronAPI.setButton(null, row, col, null, null);
-    const btn = $(`#btn-${row}-${col}`);
-    btn.css('background-color', '');
-    btn.css('border-color', '');
-
-    const btnText = btn.find('.sb-btn-title');
-    btnText.text(`Button ${row + 1} . ${col + 1}`);
-    btnText.css('color', '');
-
-    buttons = buttons.filter((btn) => btn.row !== row && btn.col !== col);
+    window.electronAPI.deleteButton(profile.id, row, col);
+    setEmptyButton(row, col);
 }
 
-// Player events
+/* PLAYER EVENTS */
 
 function onPlay(track) {
     setProgressDuration(progressBar, 0, track.duration, 0);
@@ -561,7 +506,7 @@ function onTimeUpdate(time) {
     }
 }
 
-// Player controls
+/* PLAYER CONTROLS */
 
 function setPlayButton() {
     playPauseBtn.find('.material-symbols-rounded').text('play_circle');
@@ -584,6 +529,83 @@ function disableRepeatButton() {
     repeatBtn.find('.material-symbols-rounded').text('repeat');
 }
 
+/* SWAP BUTTON */
+
+function swapButtons(draggable, droppable) {
+    const draggableRow = parseInt(draggable.attr('data-row'));
+    const draggableCol = parseInt(draggable.attr('data-col'));
+
+    const droppableRow = parseInt(droppable.attr('data-row'));
+    const droppableCol = parseInt(droppable.attr('data-col'));
+
+    window.electronAPI.swapButtons(profile.id, draggableRow, draggableCol, droppableRow, droppableCol).then((buttons) => {
+        //TODO To implement (check if buttons is promise or list)
+        // const index1 = buttons.findIndex((btn) => btn.row === row1 && btn.col === col1);
+        // const index2 = buttons.findIndex((btn) => btn.row === row2 && btn.col === col2);
+        //
+        // if (index1 !== -1) {
+        //     buttons.splice(index1, 1);
+        // }
+        //
+        // if (index2 !== -1) {
+        //     buttons.splice(index2, 1);
+        // }
+        //
+        // if (button1 != null) {
+        //     buttons.push(button1);
+        //     fillButton(button1);
+        // } else {
+        //     resetButton(row2, col2);
+        // }
+        //
+        // if (button2 != null) {
+        //     buttons.push(button2);
+        //     fillButton(button2);
+        // } else {
+        //     resetButton(row1, col1);
+        // }
+        //
+        // isDragging = false;
+    });
+}
+
+/* AUDIO DEVICES */
+
+async function showAudioOutputMenu() {
+    const items = [];
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    devices.forEach((device) => {
+        if (device.kind !== 'audiooutput') return;
+        if (device.deviceId === 'default' || device.deviceId === 'communications') return;
+
+        const selected = device.deviceId === sbSettings.output_device;
+
+        const item = {
+            text: device.label,
+            data: device.deviceId,
+            icon: selected ? 'done' : 'volume_up',
+            callback: changeAudioOutput
+        };
+        if (selected) item.classes = ['active'];
+
+        items.push(item);
+    });
+
+    items.push({classes: ['spacer']});
+
+    items.push({
+        text: 'Test Playback',
+        icon: 'play_arrow',
+        callback: testPlayback
+    });
+
+    const ctxMenu = showContextMenu(items, 0, 0);
+    ctxMenu.addClass('media-output-ctx-menu');
+    ctxMenu.css('left', `calc(100% - ${ctxMenu.outerWidth() + 8}px)`);
+    ctxMenu.css('top', (mediaOutputBtn.offset().top - ctxMenu.outerHeight() - 8) + 'px');
+}
+
 function changeAudioOutput(ctxItem) {
     const oldActive = contextMenu.find('.active');
     oldActive.removeClass('active');
@@ -595,20 +617,25 @@ function changeAudioOutput(ctxItem) {
     const deviceId = ctxItem.attr('data-value');
     player.setOutputDevice(deviceId);
 
-    //TODO Send update to main process
+    window.electronAPI.setMediaOutput(deviceId);
     return true;
 }
 
 function testPlayback(ctxItem) {
     const audio = new Audio('audio/test.mp3');
-    audio.setSinkId(ctxItem.parent().find('.active').attr('data-value')).then(async () => {
-        await audio.play();
-    });
+    try {
+        audio.setSinkId(ctxItem.parent().find('.active').attr('data-value')).then(async () => {
+            await audio.play();
+        });
+    } catch (e) {
+        console.error(e);
+    }
 
     return true;
 }
 
-// Profiles
+/* PROFILES */
+
 async function showProfileMenu(e) {
     e.stopPropagation();
     const items = [];
@@ -652,13 +679,9 @@ async function showProfileMenu(e) {
 }
 
 function changeProfile(ctxItem) {
-    const profile = {
-        id: ctxItem.attr('data-value'),
-        name: ctxItem.attr('data-text'),
-    };
-
-    window.electronAPI.setActiveProfile(profile.id);
-    setNewProfile(profile);
+    window.electronAPI.setActiveProfile(ctxItem.attr('data-value')).then((profile) => {
+        setNewProfile(profile);
+    });
 }
 
 function createProfile() {
@@ -699,7 +722,8 @@ function renameProfile(ctxItem, parentItem) {
         }
 
         window.electronAPI.renameProfile(parentItem.attr('data-value'), name).then((profile) => {
-            setNewProfile(profile);
+            profile.name = name;
+            $('#activeProfile').text(profile.name);
             menu.remove();
         }).catch(() => {
             //TODO Show error alert
@@ -714,8 +738,9 @@ function deleteProfile(ctxItem, parentItem) {
     });
 }
 
-function setNewProfile(profile) {
-    sbSettings.active_profile = profile.id;
-    $('#activeProfile').text(profile.name);
-    //TODO Rebuild soundboard
+function setNewProfile(newProfile) {
+    profile = newProfile;
+    sbSettings.active_profile = newProfile.id;
+    $('#activeProfile').text(newProfile.name);
+    generateSoundboard();
 }

@@ -7,7 +7,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // Main window
     handleButtonUpdate: (callback) => ipcRenderer.on('button_update', callback),
-    handleButtonSwap: (callback) => ipcRenderer.on('button_swap', callback),
     handlePlayNow: (callback) => ipcRenderer.on('play_now', callback),
     handleMediaPlayPause: (callback) => ipcRenderer.on('media_play_pause', callback),
     handleMediaStop: (callback) => ipcRenderer.on('media_stop', callback),
@@ -15,7 +14,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     handleMediaPrev: (callback) => ipcRenderer.on('media_prev', callback),
 
     // Buttons windows
-    handleRC: (callback) => ipcRenderer.on('rc', callback),
     handleButton: (callback) => ipcRenderer.on('button', callback),
 
     /* === TO MAIN PROCESS === */
@@ -26,18 +24,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // Windows
     openBrowser: (url) => ipcRenderer.send('open_browser', url),
-    openMediaSelector: (row, col, winId) => ipcRenderer.send('open_media_selector', row, col, winId),
+    openMediaSelector: (profile, row, col, winId) => ipcRenderer.send('open_media_selector', profile, row, col, winId),
     openFileMediaSelector: () => ipcRenderer.invoke('open_file_media_selector'),
-    openButtonSettings: (row, col) => ipcRenderer.send('open_button_settings', row, col),
+    openButtonSettings: (profile, row, col) => ipcRenderer.send('open_button_settings', profile, row, col),
     openPlayNowWindow: () => ipcRenderer.send('open_play_now_window'),
-    closeWindow: (winId) => ipcRenderer.send('close_window', winId),
 
     // Settings
     getSoundboardSettings: () => ipcRenderer.invoke('get_soundboard_settings'),
     setSoundboardSize: (width, height) => ipcRenderer.send('set_soundboard_size', width, height),
     setVolume: (volume) => ipcRenderer.send('set_volume', volume),
     setMediaOutput: (device) => ipcRenderer.send('set_media_output', device),
-    setActiveProfile: (profile) => ipcRenderer.send('set_active_profile', profile),
+    setActiveProfile: (profile) => ipcRenderer.invoke('set_active_profile', profile),
 
     // Profiles
     getProfiles: () => ipcRenderer.invoke('get_profiles'),
@@ -50,6 +47,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getButton: (profile, row, col) => ipcRenderer.invoke('get_button', profile, row, col),
     setButton: (profile, button) => ipcRenderer.send('set_button', profile, button),
     updateButton: (profile, button) => ipcRenderer.send('update_button', profile, button),
-    swapButtons: (profile, row1, col1, row2, col2) => ipcRenderer.send('swap_buttons', profile, row1, col1, row2, col2),
+    swapButtons: (profile, row1, col1, row2, col2) => ipcRenderer.invoke('swap_buttons', profile, row1, col1, row2, col2),
+    deleteButton: (profile, row, col) => ipcRenderer.send('delete_button', profile, row, col),
     refreshUrl: (profile, row, col) => ipcRenderer.send('refresh_url', profile, row, col),
+
+    // Misc
+    search: (query) => ipcRenderer.invoke('search', query),
+    playNow: (track) => ipcRenderer.send('play_now', track),
 });

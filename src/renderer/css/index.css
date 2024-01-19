@@ -71,8 +71,10 @@
 
 .sb-btn-img {
     min-width: 35px;
+    min-height: 35px;
     width: 35px;
     height: 35px;
+    aspect-ratio: 1;
     border-radius: 5px;
     background-size: cover;
     background-position: center;

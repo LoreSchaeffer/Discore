@@ -6,61 +6,39 @@ const resultsContainer = $('#results');
 const discardBtn = $('#discard');
 const saveBtn = $('#save');
 
-let row;
-let col;
+let button = null;
+let newButton = false;
 
-window.electronAPI.handleRC((event, r, c) => {
-    row = r;
-    col = c;
+window.electronAPI.handleButton((event, btn, isNew) => {
+    button = btn;
+    newButton = isNew;
 
-    if (r != null && c != null) {
-        $('#buttonTitle').text('Button ' + (row + 1) + ' . ' + (col + 1));
+    if (btn != null) {
+        $('#navProfileContainer').prepend($(`<span id="btnTitle">Button ${btn.row + 1} . ${btn.col + 1}</span>`));
     } else {
-        $('#buttonTitle').text('Play now');
-        saveBtn.find('i').removeClass('fa-save').addClass('fa-play');
+        $('#navProfileContainer').prepend($(`<span id="btnTitle">Play now</span>`));
+        saveBtn.html('<span class="material-symbols-rounded">play</span>Play');
     }
 });
 
 $(document).ready(() => {
-    const winHeight = $(window).height() - $('nav').outerHeight(true) - $('#buttons').outerHeight(true);
-    const mainContainerChildren = $('#mainContainer').children();
-    const searchContainer = $('#searchContainer');
-
-    let searchContainerHeight = winHeight;
-    mainContainerChildren.each(function () {
-        const child = $(this);
-        if (child.attr('id') === 'searchContainer') return;
-        searchContainerHeight -= child.outerHeight(true);
-    });
-
-    searchContainer.css('height', searchContainerHeight + 'px');
-
-    let resultsContainerHeight = searchContainerHeight;
-    searchContainer.children().each(function () {
-        const child = $(this);
-        if (child.attr('id') === 'search') return;
-        resultsContainerHeight -= child.outerHeight(true);
-    });
+    const height = $(window).height() - resultsContainer.offset().top - $('#buttons').outerHeight(true) - 22;
+    resultsContainer.css('height', height + 'px');
 });
 
 openFileBtn.click(async () => {
-    window.electronAPI.openMediaDialog().then((result) => {
+    window.electronAPI.openFileMediaSelector().then((result) => {
         uriField.val(result.filePaths[0]);
-        uriField.addClass('active');
     });
 });
 
-searchBtn.click(() => {
-    search();
-});
+searchBtn.click(search);
 
 searchField.keypress((e) => {
     if (e.which === 13) search();
 });
 
-discardBtn.click(() => {
-    window.electronAPI.close(winId);
-});
+discardBtn.click(() => window.electronAPI.close(winId));
 
 saveBtn.click(() => {
     let track;
@@ -73,55 +51,47 @@ saveBtn.click(() => {
             duration: parseInt(activeResult.attr('data-duration')),
             thumbnail: activeResult.attr('data-thumbnail'),
         };
+    } else {
+        track = {
+            uri: uriField.val(),
+        };
     }
 
-    if (row != null && col != null) {
-        window.electronAPI.setButton(winId, row, col, uriField.val(), track);
+    if (button != null) {
+        button.title = track.title;
+        button.uri = track.uri;
+        button.duration = track.duration;
+        button.thumbnail = track.thumbnail;
+
+        if (newButton) window.electronAPI.setButton(winId, button);
+        else window.electronAPI.updateButton(winId, button);
+
+        window.electronAPI.close(winId);
     } else {
-        window.electronAPI.playNow(winId, uriField.val(), track);
+        window.electronAPI.playNow(winId, track);
+        window.electronAPI.close(winId);
     }
 });
 
 function search() {
+    resultsContainer.find('.result').off('click');
+    resultsContainer.find('.url').off('click');
+    resultsContainer.empty();
+
     window.electronAPI.search(searchField.val()).then((results) => {
-        if (results.length === 0) return;
+        results.forEach(createResult);
 
-        $('.result').off('click');
-        $('.url').off('click');
-
-        resultsContainer.empty();
-
-        results.forEach((result) => {
-            const title = result.title.replaceAll('"', '');
-            const url = result.uri;
-            const duration = result.duration;
-            const thumbnail = result.thumbnail;
-
-            const resultElement = $(`<div class="result" data-title="${title}" data-url="${url}" data-duration="${duration}" data-thumbnail="${thumbnail}"></div>`);
-            const thumbnailElement = $('<div class="thumbnail">');
-            thumbnailElement.css('background-image', `url(${thumbnail})`);
-            resultElement.append(thumbnailElement);
-            resultElement.append(`<div class="title-block"><h2 class="title">${title}</h2><p class="url" data-target="${url}">${url}</p></div>`);
-            resultElement.append(`<p class="duration">${formatDuration(duration)}</p>`);
-
-            resultsContainer.append(resultElement);
-        });
-
-        const resultElements = $('.result');
-
-        resultElements.on('click', function() {
-            resultElements.removeClass('active');
-
+        $('.result').on('click', function () {
             const element = $(this);
-            element.addClass('active');
+            if (element.hasClass('active')) return;
 
-            uriField.addClass('active');
-            setTimeout(() => uriField.val(element.attr('data-url')), 200);
+            elements.removeClass('active');
+            element.addClass('active');
         });
 
         $('.url').on('click', function(e) {
             e.stopPropagation();
-            window.electronAPI.openUrl($(this).attr('data-target'));
+            window.electronAPI.openBrowser($(this).attr('data-target'));
         });
 
         try {
@@ -129,4 +99,17 @@ function search() {
         } catch (e) {
         }
     });
+}
+
+function createResult(track) {
+    const resultElement = $(`<div class="result" data-title="${escapeHtml(track.title)}" data-url="${track.uri}" data-duration="${track.duration}" data-thumbnail="${track.thumbnail}"></div>`);
+
+    const thumbnailElement = $('<div class="thumbnail">');
+    thumbnailElement.css('background-image', `url(${track.thumbnail})`);
+
+    resultElement.append(thumbnailElement);
+    resultElement.append(`<div class="title-block"><h2 class="title">${escapeHtml(track.title)}</h2><p class="url" data-target="${track.uri}">${track.uri}</p></div>`);
+    resultElement.append(`<p class="duration">${formatDuration(track.duration)}</p>`);
+
+    resultsContainer.append(resultElement);
 }

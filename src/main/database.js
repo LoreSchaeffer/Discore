@@ -3,6 +3,9 @@ const path = require('path');
 const {v4: uuidv4} = require("uuid");
 const sqlite3 = require('sqlite3').verbose();
 
+const ROWS = 8;
+const COLS = 10;
+
 const Database = class {
     constructor(root) {
         if (!fs.existsSync(root)) fs.mkdirSync(root);
@@ -10,8 +13,8 @@ const Database = class {
 
         this.db.serialize(() => {
             this.db.run('PRAGMA foreign_keys = ON');
-            this.db.run('CREATE TABLE IF NOT EXISTS buttons (col INTEGER NOT NULL, row INTEGER NOT NULL, btn_title TEXT, txt_color TEXT, txt_h_color TEXT, bg_color TEXT, bg_h_color TEXT, brd_color TEXT, brd_h_color TEXT, title TEXT, uri TEXT NOT NULL, url TEXT, duration INTEGER NOT NULL, thumbnail TEXT, profile BLOB NOT NULL, PRIMARY KEY (row, col), FOREIGN KEY(profile) REFERENCES profiles(id))');
-            this.db.run('CREATE TABLE IF NOT EXISTS profiles (id BLOB NOT NULL, name TEXT NOT NULL, PRIMARY KEY (id))');
+            this.db.run('CREATE TABLE IF NOT EXISTS buttons (row INTEGER NOT NULL, col INTEGER NOT NULL, btn_title TEXT, txt_color TEXT, txt_h_color TEXT, bg_color TEXT, bg_h_color TEXT, brd_color TEXT, brd_h_color TEXT, title TEXT, uri TEXT NOT NULL, url TEXT, duration INTEGER NOT NULL, thumbnail TEXT, profile BLOB NOT NULL, PRIMARY KEY (row, col), FOREIGN KEY(profile) REFERENCES profiles(id))');
+            this.db.run(`CREATE TABLE IF NOT EXISTS profiles (id BLOB NOT NULL, name TEXT NOT NULL, rows INTEGER NOT NULL DEFAULT ${ROWS}, columns INTEGER NOT NULL DEFAULT ${COLS}, PRIMARY KEY (id))`);
         });
     }
 
@@ -26,6 +29,17 @@ const Database = class {
         });
     }
 
+    getProfile(id) {
+        return new Promise((resolve, reject) => {
+            const stmt = this.db.prepare('SELECT * FROM profiles WHERE id = ?');
+            stmt.get([id], (e, row) => {
+                if (e) reject(e);
+                else resolve(row);
+            });
+            stmt.finalize();
+        });
+    }
+
     createProfile(name) {
         const id = this.randomUUID();
 
@@ -33,7 +47,7 @@ const Database = class {
             const stmt = this.db.prepare('INSERT INTO profiles (id, name) VALUES (?, ?)');
             stmt.run([id, name], (e) => {
                 if (e) reject(e);
-                else resolve(id);
+                else resolve({id: id, name: name, rows: ROWS, columns: COLS});
             });
             stmt.finalize();
         });
@@ -92,8 +106,26 @@ const Database = class {
 
     addButton(profile, button) {
         return new Promise((resolve, reject) => {
-            const stmt = this.db.prepare('INSERT INTO buttons (col, row, btn_title, txt_color, txt_h_color, bg_color, bg_h_color, brd_color, brd_h_color, title, uri, url, duration, thumbnail, profile) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-            stmt.run([button.col, button.row, button.btn_title, button.txt_color, button.txt_h_color, button.bg_color, button.bg_h_color, button.brd_color, button.brd_h_color, button.title, button.uri, button.url, button.duration, button.thumbnail, profile], (e) => {
+            const stmt = this.db.prepare('INSERT INTO buttons (row, col, btn_title, txt_color, txt_h_color, bg_color, bg_h_color, brd_color, brd_h_color, title, uri, url, duration, thumbnail, profile) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+            const params = [
+                button.row,
+                button.col,
+                button.btn_title,
+                button.txt_color,
+                button.txt_h_color,
+                button.bg_color,
+                button.bg_h_color,
+                button.brd_color,
+                button.brd_h_color,
+                button.title,
+                button.uri,
+                button.url,
+                button.duration,
+                button.thumbnail,
+                profile
+            ];
+
+            stmt.run(params, (e) => {
                 if (e) {
                     reject(e);
                 } else {
@@ -107,7 +139,25 @@ const Database = class {
     updateButton(profile, button) {
         return new Promise((resolve, reject) => {
             const stmt = this.db.prepare('UPDATE buttons SET btn_title = ?, txt_color = ?, txt_h_color = ?, bg_color = ?, bg_h_color = ?, brd_color = ?, brd_h_color = ?, title = ?, uri = ?, url = ?, duration = ?, thumbnail = ? WHERE profile = ? AND row = ? AND col = ?');
-            stmt.run([button.btn_title, button.txt_color, button.txt_h_color, button.bg_color, button.bg_h_color, button.brd_color, button.brd_h_color, button.title, button.uri, button.url, button.duration, button.thumbnail, profile, button.row, button.col], (e) => {
+            const params = [
+                button.row,
+                button.col,
+                button.btn_title,
+                button.txt_color,
+                button.txt_h_color,
+                button.bg_color,
+                button.bg_h_color,
+                button.brd_color,
+                button.brd_h_color,
+                button.title,
+                button.uri,
+                button.url,
+                button.duration,
+                button.thumbnail,
+                profile
+            ];
+
+            stmt.run(params, (e) => {
                 if (e) {
                     reject(e);
                 } else {

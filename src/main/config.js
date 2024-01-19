@@ -49,8 +49,6 @@ const Config = class {
 const DEF_CONFIG = {
     width: 1366,
     height: 768,
-    rows: 8,
-    columns: 10,
     volume: 50,
     output_device: 'default',
     active_profile: ''
