@@ -17,9 +17,9 @@ if (require('electron-squirrel-startup')) {
     app.quit();
 }
 
-const startApp = () => {
+const startApp = async () => {
+    await initConfigs();
     registerGlobalShortcuts();
-    initConfigs();
 
     mainWindow = new BrowserWindow({
         icon: 'icon.png',
@@ -69,8 +69,8 @@ app.on('activate', () => {
     }
 });
 
-app.on('will-quit', () => {
-    DB.close();
+app.on('will-quit', async () => {
+    await DB.close();
     globalShortcut.unregisterAll();
 });
 
@@ -205,11 +205,12 @@ ipcMain.handle('delete_profile', (event, id) => {
         try {
             const profiles = await DB.getProfiles();
             if (profiles.length === 1) {
-                reject(new Error("Cannot delete the last remaining profile"));
+                console.error("Cannot delete the last remaining profile");
+                reject();
             } else {
                 await DB.deleteProfile(id);
-                profiles.splice(profiles.findIndex((profile) => profile.id === id), 1);
-                resolve(profiles.length > 0 ? {id: profiles[0].id, name: profiles[0].name} : null);
+                const profiles = await DB.getProfiles();
+                return resolve(profiles[0]);
             }
         } catch (error) {
             reject(error);
@@ -228,11 +229,19 @@ ipcMain.handle('get_button', (event, profile, row, col) => {
 });
 
 ipcMain.on('set_button', (event, profile, button) => {
-    DB.addButton(profile, button);
+    DB.addButton(profile, button).then((button) => {
+        mainWindow.webContents.send('button_update', button);
+    }).catch((e) => {
+        console.log(e);
+    });
 });
 
 ipcMain.on('update_button', (event, profile, button) => {
-    DB.updateButton(profile, button);
+    DB.updateButton(profile, button).then((button) => {
+        mainWindow.webContents.send('button_update', button);
+    }).catch((e) => {
+        console.log(e);
+    });
 });
 
 ipcMain.on('swap_buttons', (event, profile, row1, col1, row2, col2) => {
@@ -445,17 +454,18 @@ function registerGlobalShortcuts() {
     });
 }
 
-function initConfigs() {
+async function initConfigs() {
     const result = CONFIG.init();
     if (result) {
         console.error('Error during configs initialization:', result);
         app.quit();
     }
 
-    DB.getProfiles().then((profiles) => {
+    try {
+        const profiles = await DB.getProfiles();
         if (profiles.length === 0) {
-            DB.createProfile('Default').then((id) => {
-                CONFIG.config.active_profile = id;
+            DB.createProfile('Default').then((profile) => {
+                CONFIG.config.active_profile = profile.id;
                 CONFIG.save();
             }).catch((e) => {
                 console.error(e);
@@ -467,10 +477,10 @@ function initConfigs() {
                 CONFIG.save();
             }
         }
-    }).catch((e) => {
+    } catch (e) {
         console.error(e);
         app.quit();
-    });
+    }
 }
 
 function openModal(parent, width, height, resizable, html, onFinish, onShow) {

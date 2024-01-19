@@ -63,12 +63,12 @@ saveBtn.click(() => {
         button.duration = track.duration;
         button.thumbnail = track.thumbnail;
 
-        if (newButton) window.electronAPI.setButton(winId, button);
-        else window.electronAPI.updateButton(winId, button);
+        if (newButton) window.electronAPI.setButton(button.profile, button);
+        else window.electronAPI.updateButton(button.profile, button);
 
         window.electronAPI.close(winId);
     } else {
-        window.electronAPI.playNow(winId, track);
+        window.electronAPI.playNow(track);
         window.electronAPI.close(winId);
     }
 });
@@ -81,7 +81,9 @@ function search() {
     window.electronAPI.search(searchField.val()).then((results) => {
         results.forEach(createResult);
 
-        $('.result').on('click', function () {
+        const elements = $('.result');
+        elements.on('click', function () {
+            console.log('click');
             const element = $(this);
             if (element.hasClass('active')) return;
 

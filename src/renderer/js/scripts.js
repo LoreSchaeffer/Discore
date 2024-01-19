@@ -271,7 +271,6 @@ function updateProgressValue(progress, value) {
     progress.attr('aria-valuenow', value);
 
     const range = progress.children('input');
-    const progressbar = progress.children('.progress-bar');
 
     range.val(value);
     range.trigger('input');

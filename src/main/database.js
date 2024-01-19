@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const {v4: uuidv4} = require("uuid");
-const sqlite3 = require('sqlite3').verbose();
+const {Sequelize, DataTypes} = require('sequelize');
 
 const ROWS = 8;
 const COLS = 10;
@@ -9,185 +8,240 @@ const COLS = 10;
 const Database = class {
     constructor(root) {
         if (!fs.existsSync(root)) fs.mkdirSync(root);
-        this.db = new sqlite3.Database(path.join(root, 'database.db'));
-
-        this.db.serialize(() => {
-            this.db.run('PRAGMA foreign_keys = ON');
-            this.db.run('CREATE TABLE IF NOT EXISTS buttons (row INTEGER NOT NULL, col INTEGER NOT NULL, btn_title TEXT, txt_color TEXT, txt_h_color TEXT, bg_color TEXT, bg_h_color TEXT, brd_color TEXT, brd_h_color TEXT, title TEXT, uri TEXT NOT NULL, url TEXT, duration INTEGER NOT NULL, thumbnail TEXT, profile BLOB NOT NULL, PRIMARY KEY (row, col), FOREIGN KEY(profile) REFERENCES profiles(id))');
-            this.db.run(`CREATE TABLE IF NOT EXISTS profiles (id BLOB NOT NULL, name TEXT NOT NULL, rows INTEGER NOT NULL DEFAULT ${ROWS}, columns INTEGER NOT NULL DEFAULT ${COLS}, PRIMARY KEY (id))`);
+        this.sequelize = new Sequelize({
+            dialect: 'sqlite',
+            storage: path.join(root, 'database.db'),
+            logging: false
         });
-    }
 
-    getProfiles() {
-        return new Promise((resolve, reject) => {
-            const stmt = this.db.prepare('SELECT * FROM profiles');
-            stmt.all([], (e, rows) => {
-                if (e) reject(e);
-                else resolve(rows);
-            });
-            stmt.finalize();
-        });
-    }
-
-    getProfile(id) {
-        return new Promise((resolve, reject) => {
-            const stmt = this.db.prepare('SELECT * FROM profiles WHERE id = ?');
-            stmt.get([id], (e, row) => {
-                if (e) reject(e);
-                else resolve(row);
-            });
-            stmt.finalize();
-        });
-    }
-
-    createProfile(name) {
-        const id = this.randomUUID();
-
-        return new Promise((resolve, reject) => {
-            const stmt = this.db.prepare('INSERT INTO profiles (id, name) VALUES (?, ?)');
-            stmt.run([id, name], (e) => {
-                if (e) reject(e);
-                else resolve({id: id, name: name, rows: ROWS, columns: COLS});
-            });
-            stmt.finalize();
-        });
-    }
-
-    renameProfile(id, name) {
-        return new Promise((resolve, reject) => {
-            const stmt = this.db.prepare('UPDATE profiles SET name = ? WHERE id = ?');
-            stmt.run([name, id], (e) => {
-                if (e) reject(e);
-                else resolve({id: id, name: name});
-            });
-            stmt.finalize();
-        });
-    }
-
-    deleteProfile(id) {
-        return new Promise((resolve, reject) => {
-            let stmt = this.db.prepare('DELETE FROM buttons WHERE profile = ?');
-            stmt.run([id], (e) => {
-                if (e) reject(e);
-            });
-            stmt.finalize();
-
-            stmt = this.db.prepare('DELETE FROM profiles WHERE id = ?');
-            stmt.run([id], (e) => {
-                if (e) reject(e);
-            });
-            stmt.finalize();
-
-            resolve();
-        });
-    }
-
-    getButtons(profile) {
-        return new Promise((resolve, reject) => {
-            const stmt = this.db.prepare('SELECT * FROM buttons WHERE profile = ?');
-            stmt.all([profile], (e, rows) => {
-                if (e) reject(e);
-                else resolve(rows);
-            });
-            stmt.finalize();
-        });
-    }
-
-    getButton(profile, row, col) {
-        return new Promise((resolve, reject) => {
-            const stmt = this.db.prepare('SELECT * FROM buttons WHERE profile = ? AND row = ? AND col = ?');
-            stmt.get([profile, row, col], (e, row) => {
-                if (e) reject(e);
-                else resolve(row);
-            });
-            stmt.finalize();
-        });
-    }
-
-    addButton(profile, button) {
-        return new Promise((resolve, reject) => {
-            const stmt = this.db.prepare('INSERT INTO buttons (row, col, btn_title, txt_color, txt_h_color, bg_color, bg_h_color, brd_color, brd_h_color, title, uri, url, duration, thumbnail, profile) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-            const params = [
-                button.row,
-                button.col,
-                button.btn_title,
-                button.txt_color,
-                button.txt_h_color,
-                button.bg_color,
-                button.bg_h_color,
-                button.brd_color,
-                button.brd_h_color,
-                button.title,
-                button.uri,
-                button.url,
-                button.duration,
-                button.thumbnail,
-                profile
-            ];
-
-            stmt.run(params, (e) => {
-                if (e) {
-                    reject(e);
-                } else {
-                    resolve();
+        this.Profile = this.sequelize.define('profile', {
+            id: {
+                type: DataTypes.UUID,
+                defaultValue: DataTypes.UUIDV4,
+                primaryKey: true
+            },
+            name: {
+                type: DataTypes.STRING,
+                allowNull: false
+            },
+            rows: {
+                type: DataTypes.INTEGER,
+                defaultValue: ROWS
+            },
+            columns: {
+                type: DataTypes.INTEGER,
+                defaultValue: COLS
+            }
+        }, {
+            indexes: [
+                {
+                    unique: true,
+                    fields: ['id']
                 }
-            });
-            stmt.finalize();
+            ],
+            timestamps: false
         });
-    }
 
-    updateButton(profile, button) {
-        return new Promise((resolve, reject) => {
-            const stmt = this.db.prepare('UPDATE buttons SET btn_title = ?, txt_color = ?, txt_h_color = ?, bg_color = ?, bg_h_color = ?, brd_color = ?, brd_h_color = ?, title = ?, uri = ?, url = ?, duration = ?, thumbnail = ? WHERE profile = ? AND row = ? AND col = ?');
-            const params = [
-                button.row,
-                button.col,
-                button.btn_title,
-                button.txt_color,
-                button.txt_h_color,
-                button.bg_color,
-                button.bg_h_color,
-                button.brd_color,
-                button.brd_h_color,
-                button.title,
-                button.uri,
-                button.url,
-                button.duration,
-                button.thumbnail,
-                profile
-            ];
-
-            stmt.run(params, (e) => {
-                if (e) {
-                    reject(e);
-                } else {
-                    resolve();
+        this.Button = this.sequelize.define('button', {
+            row: {
+                type: DataTypes.INTEGER,
+                allowNull: false
+            },
+            col: {
+                type: DataTypes.INTEGER,
+                allowNull: false
+            },
+            txt_color: {
+                type: DataTypes.STRING
+            },
+            txt_h_color: {
+                type: DataTypes.STRING
+            },
+            bg_color: {
+                type: DataTypes.STRING
+            },
+            bg_h_color: {
+                type: DataTypes.STRING
+            },
+            brd_color: {
+                type: DataTypes.STRING
+            },
+            brd_h_color: {
+                type: DataTypes.STRING
+            },
+            btn_title: {
+                type: DataTypes.STRING
+            },
+            title: {
+                type: DataTypes.STRING
+            },
+            uri: {
+                type: DataTypes.STRING,
+                allowNull: false
+            },
+            url: {
+                type: DataTypes.STRING
+            },
+            duration: {
+                type: DataTypes.INTEGER,
+                allowNull: false
+            },
+            thumbnail: {
+                type: DataTypes.STRING
+            }
+        }, {
+            indexes: [
+                {
+                    unique: true,
+                    fields: ['profile_id', 'row', 'col'],
                 }
-            });
-            stmt.finalize();
+            ],
+            timestamps: false
         });
+
+        this.Profile.hasMany(this.Button);
+        this.Button.belongsTo(this.Profile, {foreignKey: 'profile_id'});
+
+        this.sequelize.sync();
     }
 
-    deleteButton(profile, row, col) {
-        return new Promise((resolve, reject) => {
-            const stmt = this.db.prepare('DELETE FROM buttons WHERE profile = ? AND row = ? AND col = ?');
-            stmt.run([profile, row, col], (e) => {
-                if (e) {
-                    reject(e);
-                } else {
-                    resolve();
-                }
+    async getProfiles() {
+        try {
+            return (await this.Profile.findAll())
+                .map(profile => profile.get({plain: true}));
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
+    }
+
+    async getProfile(id) {
+        try {
+            const profile = await this.Profile.findByPk(id);
+            if (!profile) return null;
+            return profile.get({plain: true});
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
+    }
+
+    async createProfile(name) {
+        try {
+            return (await this.Profile.create({name: name})).get({plain: true});
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
+    }
+
+    async renameProfile(id, name) {
+        try {
+            const profile = await this.Profile.findByPk(id);
+            profile.name = name;
+            await profile.save();
+            return profile.get({plain: true});
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async deleteProfile(id) {
+        try {
+            const profile = await this.Profile.findByPk(id);
+            if (!profile) return;
+            await profile.destroy();
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async getButtons(profile) {
+        try {
+            return (await this.Button.findAll({where: {profile_id: profile}}))
+                .map(button => button.get({plain: true}));
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
+    }
+
+    async getButton(profile, row, col) {
+        try {
+            const button = await this.Button.findOne({where: {profile_id: profile, row: row, col: col}});
+            if (!button) return null;
+            return button.get({plain: true});
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
+    }
+
+    async addButton(profile, button) {
+        try {
+            return (await this.Button.create({
+                row: button.row,
+                col: button.col,
+                txt_color: button.txt_color || null,
+                txt_h_color: button.txt_h_color || null,
+                bg_color: button.bg_color || null,
+                bg_h_color: button.bg_h_color || null,
+                brd_color: button.brd_color || null,
+                brd_h_color: button.brd_h_color || null,
+                btn_title: button.btn_title || null,
+                title: button.title || null,
+                uri: button.uri,
+                url: button.url || null,
+                duration: button.duration,
+                thumbnail: button.thumbnail || null,
+                profile_id: profile
+            })).get({plain: true});
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
+    }
+
+    async updateButton(profile, button) {
+        try {
+            const [updated] = await this.Button.update({
+                btn_title: button.btn_title || null,
+                txt_color: button.txt_color || null,
+                txt_h_color: button.txt_h_color || null,
+                bg_color: button.bg_color || null,
+                bg_h_color: button.bg_h_color || null,
+                brd_color: button.brd_color || null,
+                brd_h_color: button.brd_h_color || null,
+                title: button.title || null,
+                uri: button.uri,
+                url: button.url || null,
+                duration: button.duration,
+                thumbnail: button.thumbnail || null,
+            }, {
+                where: {profile_id: profile, row: button.row, col: button.col}
             });
-            stmt.finalize();
-        });
+
+            if (!updated) throw new Error('Button not found');
+
+            return (await this.Button.findOne({where: {profile_id: profile, row: button.row, col: button.col}}))
+                .get({plain: true});
+        } catch (error) {
+            console.error(error);
+        }
     }
 
-    close() {
-        this.db.close();
+    async deleteButton(profile, row, col) {
+        try {
+            const button = await this.Button.findOne({where: {profile_id: profile, row: row, col: col}});
+            if (!button) return;
+            await button.destroy();
+        } catch (e) {
+            console.error(e);
+        }
     }
 
-    randomUUID() {
-        return uuidv4();
+    async close() {
+        await this.sequelize.close();
     }
 };
 

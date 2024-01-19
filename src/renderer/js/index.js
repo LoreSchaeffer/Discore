@@ -213,7 +213,7 @@ function fillButton(button) {
 
     btnText.text(button.title);
 
-    btnImage.css('background-image', button.track.thumbnail ? `url(${button.track.thumbnail})` : 'url("images/track.png")');
+    btnImage.css('background-image', button.thumbnail ? `url(${button.thumbnail})` : 'url("images/track.png")');
 
     btnElement.css('background-color', button.background_color ? button.background_color : 'var(--def-button)');
     btnElement.css('border-color', button.border_color ? button.border_color : 'transparent');
@@ -735,12 +735,14 @@ function deleteProfile(ctxItem, parentItem) {
     window.electronAPI.deleteProfile(parentItem.attr('data-value')).then((profile) => {
         if (profile) setNewProfile(profile);
     }).catch(() => {
+        console.log('error');
     });
 }
 
 function setNewProfile(newProfile) {
     profile = newProfile;
     sbSettings.active_profile = newProfile.id;
+    window.electronAPI.setActiveProfile(newProfile.id);
     $('#activeProfile').text(newProfile.name);
     generateSoundboard();
 }
