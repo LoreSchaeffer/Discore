@@ -1,3 +1,12 @@
+#btnTitle {
+    font-size: calc(var(--nav-height) - 11px);
+    line-height: calc(var(--nav-height) - 11px);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-left: 10px;
+    user-select: none;
+}
+
 #mainContainer {
     margin-top: calc(var(--nav-height) + var(--nav-margin));
     padding-left: var(--window-margins);
@@ -6,24 +15,70 @@
 }
 
 .btn {
-    width: 36px;
-    height: 36px;
+    height: 22px;
+    font-size: 14px;
+    line-height: 14px;
+}
+
+.btn .material-symbols-rounded {
+    font-size: 14px;
+    line-height: 14px;
+}
+
+.input-row {
+    justify-content: space-between;
+}
+
+.input-row .col-form-label {
+    white-space: nowrap;
+    margin-right: 4px;
+}
+
+.input-row .btn {
+    margin-left: 4px;
+}
+
+.input-row .form-control[type="number"] {
+    max-width: 80px;
+}
+
+#fileInputGroup {
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--background-secondary);
+}
+
+#buttonSettings {
+    padding-top: 10px;
+}
+
+#timeContainer {
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--background-secondary);
+}
+
+.form-color {
+    border: none;
     padding: 0;
+    margin: 0;
+    border-radius: 50%;
+}
+
+#buttons {
     display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
     align-items: center;
-    justify-content: center;
-    border-radius: 8px;
+    justify-content: flex-end;
+    position: absolute;
+    bottom: var(--window-margins);
+    right: var(--window-margins);
 }
 
-#inputRow {
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--primary-dark-light);
+#buttons > :first-child {
+    margin-right: 8px;
 }
 
-#openMediaSelector {
-    margin-left: 10px;
-}
-
+/*
 #buttonSettings {
     padding-top: 20px;
 }
@@ -188,4 +243,4 @@ input[type="color"]::-webkit-color-swatch:hover {
 
 #buttons .btn {
     margin-left: 8px;
-}
+}*/

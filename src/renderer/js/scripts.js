@@ -100,6 +100,61 @@ $(document).ready(() => {
     $('.num-input-spinner').change(function () {
         if ($(this).val() === "") $(this).val(0);
     });
+
+    $('.form-select').mousedown(function (e) {
+        e.preventDefault();
+    });
+
+    $('.form-select').click(function (e) {
+        const select = $(this);
+
+        if (select.hasClass('active')) {
+            select.removeClass('active');
+            return;
+        }
+
+        e.stopPropagation();
+        select.addClass('active');
+
+        const items = [];
+        select.children('option').each(function() {
+            const option = $(this);
+
+            const item = {
+                text: option.text(),
+                data: option.attr('value'),
+                callback: () => {
+                    select.val(option.attr('value'));
+                    select.removeClass('active');
+                }
+            };
+
+            if (option.is(':selected')) item.classes = ['selected'];
+
+            items.push(item);
+        });
+
+        const ctxMenu = showContextMenu(items, select.position().left, select.position().top + select.outerHeight());
+        ctxMenu.addClass('select-menu');
+        ctxMenu.css('width', select.outerWidth() + 'px');
+    });
+
+    $('.colorpicker').each(function () {
+        const container = $(this);
+        const input = $(`<input type="color">`);
+        const preview = $(`<div class="colorpicker-preview"></div>`);
+
+        preview.css('background-color', input.val());
+
+        container.append(input);
+        container.append(preview);
+
+        preview.click(() => input.click());
+        input.change(() => {
+            preview.css('background-color', input.val());
+            container.trigger('change');
+        });
+    });
 });
 
 /*

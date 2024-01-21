@@ -26,7 +26,7 @@ let row;
 let col;
 let button;
 
-$(document).ready(() => {
+/*$(document).ready(() => {
     $('#stylePreview').css('height', $('#styleSettings').height() + 'px');
 });
 
@@ -265,4 +265,4 @@ function convertToUnit(unit, duration) {
     if (unit === 'ms') return duration * 1000;
     else if (unit === 's') return duration;
     else if (unit === 'm') return Math.floor(duration / 60);
-}
+}*/

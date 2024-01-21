@@ -607,42 +607,6 @@ input::-webkit-inner-spin-button {
 
 /* End of Number Spinner */
 
-/* Start of Range */
-/*TODO*/
-/*.form-range::-webkit-slider-runnable-track {
-    border-radius: 1em;
-    height: 8px;
-    background-color: #42484d;
-}
-
-.form-range:focus::-webkit-slider-thumb {
-    background-color: var(--blurple);
-}
-
-.form-range::-webkit-slider-thumb {
-    margin-top: -4px;
-    scale: 1.15;
-    background-color: var(--blurple);
-}
-
-.range-track {
-    content: '';
-    position: absolute;
-    border-radius: 1em 0 0 1em;
-    top: 8px;
-    left: 0;
-    width: 0;
-    height: 8px;
-    background-color: var(--blurple);
-    pointer-events: none;
-}
-
-.range .thumb:after {
-    background: var(--blurple);
-}*/
-
-/* End of Range */
-
 /* Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
@@ -676,13 +640,39 @@ input::-webkit-inner-spin-button {
 
 /* End of Scrollbar */
 
+/* Select */
+.form-select {
+    border: 2px solid var(--background-tertiary) !important;
+    border-radius: 4px;
+    outline: none !important;
+    box-shadow: none !important;
+    height: 22px;
+    font-size: .875rem;
+    line-height: .775rem;
+    padding: 0 0.5rem;
+    background-color: var(--background-tertiary);
+}
+
+.select-menu .selected {
+    background-color: var(--blurple);
+    color: var(--white);
+}
+
+/* End of Select */
+
 .form-control-sm {
     height: 26px;
     min-height: 26px;
     border: 2px solid transparent;
+    border-radius: 4px;
     outline: none !important;
     box-shadow: none !important;
+    background-color: var(--background-tertiary) !important;
     transition: background-color 500ms ease-in-out;
+}
+
+.form-control[type="number"] {
+    text-align: center;
 }
 
 .form-control-sm:focus:not(.invalid) {
@@ -706,6 +696,19 @@ input::-webkit-inner-spin-button {
     align-items: center;
     justify-content: flex-start;
 }
+
+/* Color picker */
+.colorpicker input {
+    display: none;
+}
+
+.colorpicker-preview {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+/* End of color picker */
 
 /* Progress bar */
 .progress {

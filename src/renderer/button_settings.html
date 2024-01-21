@@ -2,127 +2,126 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8"/>
-    <title>ESoundboard</title>
+    <title>Discore</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta http-equiv="Content-Security-Policy" content="default-src *; script-src *">
+    <meta http-equiv="Content-Security-Policy" content="default-src *; img-src * data:; script-src *">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/>
     <link rel="stylesheet" href="libs/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/styles.css"/>
     <link rel="stylesheet" href="css/button_settings.css"/>
 </head>
 <body>
 <div id="mainContainer" class="container-fluid">
-    <div id="formContainer">
-        <div id="inputRow" class="input-row">
-            <div class="form-outline">
-                <input type="text" id="uri" class="form-control form-control-sm" readonly/>
-                <label class="form-label" for="uri">File or Url</label>
-            </div>
-            <a id="openMediaSelector" role="button" class="btn text-white" style="background-color: var(--primary);" href="#"><i class="fa-solid fa-pen-to-square"></i></a>
-        </div>
+    <div id="fileInputGroup" class="input-row">
+        <label class="col-form-label" for="uri">File or Url</label>
+        <input type="text" id="uri" class="form-control form-control-sm" readonly>
+        <button id="openMediaSelector" role="button" class="btn btn-primary btn-image"><span
+                class="material-symbols-rounded">edit</span>Edit
+        </button>
     </div>
 
     <div id="buttonSettings">
-        <div class="form-outline">
-            <input type="text" id="title" class="form-control form-control-sm" />
-            <label class="form-label" for="title">Title</label>
-        </div>
-
-        <div id="styleContainer">
-            <div id="styleSettings">
-                <div class="form-color">
-                    <label class="form-label" for="backgroundColor">Background Color</label>
-                    <div class="input-reset">
-                        <input type="color" id="backgroundColor" class="form-color" />
-                        <span class="reset" id="resetBackgroundColor"><i class="fa-solid fa-undo"></i></span>
-                    </div>
-                </div>
-                <div class="form-color">
-                    <label class="form-label" for="backgroundHoverColor">Background Hover Color</label>
-                    <div class="input-reset">
-                        <input type="color" id="backgroundHoverColor" class="form-color" />
-                        <span class="reset" id="resetBackgroundHoverColor"><i class="fa-solid fa-undo"></i></span>
-                    </div>
-                </div>
-                <div class="form-color">
-                    <label class="form-label" for="textColor">Text Color</label>
-                    <div class="input-reset">
-                        <input type="color" id="textColor" class="form-color" />
-                        <span class="reset" id="resetTextColor"><i class="fa-solid fa-undo"></i></span>
-                    </div>
-                </div>
-                <div class="form-color">
-                    <label class="form-label" for="textHoverColor">Text Hover Color</label>
-                    <div class="input-reset">
-                        <input type="color" id="textHoverColor" class="form-color" />
-                        <span class="reset" id="resetTextHoverColor"><i class="fa-solid fa-undo"></i></span>
-                    </div>
-                </div>
-                <div class="form-color">
-                    <label class="form-label" for="borderColor">Border Color</label>
-                    <div class="input-reset">
-                        <input type="color" id="borderColor" class="form-color" />
-                        <span class="reset" id="resetBorderColor"><i class="fa-solid fa-undo"></i></span>
-                    </div>
-                </div>
-                <div class="form-color">
-                    <label class="form-label" for="borderHoverColor">Border Hover Color</label>
-                    <div class="input-reset">
-                        <input type="color" id="borderHoverColor" class="form-color" />
-                        <span class="reset" id="resetBorderHoverColor"><i class="fa-solid fa-undo"></i></span>
-                    </div>
-                </div>
-            </div>
-            <div id="stylePreview">
-                <div id="preview">
-                    <span id="previewText">Preview</span>
-                </div>
-            </div>
+        <div class="input-row">
+            <label class="col-form-label" for="title">Title</label>
+            <input type="text" id="title" class="form-control form-control-sm">
         </div>
         <div id="timeContainer">
             <div class="input-row">
-                <label class="form-label" for="startTime">Track starts after </label>
-                <div class="number-spinner">
-                    <span data-for="startTime" class="spinner-element next"><i class="fas fa-plus"></i></span>
-                    <span data-for="startTime" class="spinner-element prev"><i class="fas fa-minus"></i></span>
-                    <input id="startTime" type="number" class="number-input num-input-spinner" value="0" min="0" />
-                </div>
-                <select id="startTimeUnit" class="form-select">
+                <p class="col-form-label" for="startTime">Track starts after</p>
+                <input id="startTime" type="number" class="form-control form-control-sm" value="0" min="0"/>
+                <select class="form-select form-select-sm">
                     <option value="s" selected>Seconds</option>
                     <option value="ms">Milliseconds</option>
                     <option value="m">Minutes</option>
                 </select>
             </div>
             <div class="input-row">
-                <label class="form-label" for="startTime">Track ends </label>
-                <select id="endTimeType" class="form-select">
+                <p class="col-form-label" for="endTime">Track ends with</p>
+                <select id="endTimeType" class="form-select form-select-sm">
                     <option value="after" selected>after</option>
                     <option value="at">at</option>
                 </select>
-                <div class="number-spinner">
-                    <span data-for="endTime" class="spinner-element next"><i class="fas fa-plus"></i></span>
-                    <span data-for="endTime" class="spinner-element prev"><i class="fas fa-minus"></i></span>
-                    <input id="endTime" type="number" class="number-input num-input-spinner" value="0" min="0" />
-                </div>
-                <select id="endTimeUnit" class="form-select">
+                <input id="endTime" type="number" class="form-control form-control-sm" value="0" min="0">
+                <select id="endTimeUnit" class="form-select form-select-sm">
                     <option value="s" selected>Seconds</option>
                     <option value="ms">Milliseconds</option>
                     <option value="m">Minutes</option>
                 </select>
             </div>
         </div>
-        <div id="buttons">
-            <a id="discard" role="button" class="btn text-white" style="background-color: var(--red);" href="#"><i class="fa-solid fa-x"></i></a>
-            <a id="save" role="button" class="btn text-white" style="background-color: var(--green);" href="#"><i class="fa-solid fa-save"></i></a>
+    </div>
+    <div id="styleContainer">
+        <div class="colorpicker"></div>
+    </div>
+    <!--<div id="styleContainer">
+        <div id="styleSettings">
+            <div class="form-color">
+                <label class="form-label" for="backgroundColor">Background Color</label>
+                <div class="input-reset">
+                    <input type="color" id="backgroundColor" class="form-color" />
+                    <span class="reset" id="resetBackgroundColor"><i class="fa-solid fa-undo"></i></span>
+                </div>
+            </div>
+            <div class="form-color">
+                <label class="form-label" for="backgroundHoverColor">Background Hover Color</label>
+                <div class="input-reset">
+                    <input type="color" id="backgroundHoverColor" class="form-color" />
+                    <span class="reset" id="resetBackgroundHoverColor"><i class="fa-solid fa-undo"></i></span>
+                </div>
+            </div>
+            <div class="form-color">
+                <label class="form-label" for="textColor">Text Color</label>
+                <div class="input-reset">
+                    <input type="color" id="textColor" class="form-color" />
+                    <span class="reset" id="resetTextColor"><i class="fa-solid fa-undo"></i></span>
+                </div>
+            </div>
+            <div class="form-color">
+                <label class="form-label" for="textHoverColor">Text Hover Color</label>
+                <div class="input-reset">
+                    <input type="color" id="textHoverColor" class="form-color" />
+                    <span class="reset" id="resetTextHoverColor"><i class="fa-solid fa-undo"></i></span>
+                </div>
+            </div>
+            <div class="form-color">
+                <label class="form-label" for="borderColor">Border Color</label>
+                <div class="input-reset">
+                    <input type="color" id="borderColor" class="form-color" />
+                    <span class="reset" id="resetBorderColor"><i class="fa-solid fa-undo"></i></span>
+                </div>
+            </div>
+            <div class="form-color">
+                <label class="form-label" for="borderHoverColor">Border Hover Color</label>
+                <div class="input-reset">
+                    <input type="color" id="borderHoverColor" class="form-color" />
+                    <span class="reset" id="resetBorderHoverColor"><i class="fa-solid fa-undo"></i></span>
+                </div>
+            </div>
+        </div>
+        <div id="stylePreview">
+            <div id="preview">
+                <span id="previewText">Preview</span>
+            </div>
         </div>
     </div>
+</div>-->
+
+    <div id="buttons">
+        <button id="discard" role="button" class="btn btn-danger btn-image"><span class="material-symbols-rounded">close</span>Close</button>
+        <button id="save" role="button" class="btn btn-success btn-image"><span class="material-symbols-rounded">save</span>Save</button>
+    </div>
+
 </div>
 
 <script src="libs/js/jquery-3.7.1.min.js"></script>
 <script src="libs/bootstrap/js/bootstrap.min.js"></script>
 <script src="js/scripts.js"></script>
+<script src="js/player.js"></script>
 <script src="js/button_settings.js"></script>
 </body>
 </html>

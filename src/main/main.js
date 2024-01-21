@@ -114,7 +114,7 @@ ipcMain.on('open_media_selector', (event, profile, row, col, winId) => {
             button = {
                 row: row,
                 col: col,
-                profile: profile
+                profile_id: profile
             };
 
             modal.webContents.send('button', button, true);
@@ -133,9 +133,20 @@ ipcMain.handle('open_file_media_selector', async (event) => {
 });
 
 ipcMain.on('open_button_settings', (event, profile, row, col) => {
-    openModal(mainWindow, 500, 600, false, 'button_settings.html', (modal) => {
-        modal.webContents.send('rc', row, col);
-        modal.webContents.send('button', CONFIG.getButton(row, col));
+    openModal(mainWindow, 500, 600, false, 'button_settings.html', async (modal) => {
+        let button = await DB.getButton(profile, row, col);
+
+        if (button == null) {
+            button = {
+                row: row,
+                col: col,
+                profile_id: profile
+            };
+
+            modal.webContents.send('button', button, true);
+        } else {
+            modal.webContents.send('button', button, false);
+        }
     });
 });
 
@@ -420,18 +431,7 @@ ipcMain.handle('get_new_url', async (event, row, col) => {
         console.log(e);
     }
 });
-
-ipcMain.on('update_button', (event, winId, button) => {
-    if (winId != null) {
-        windows[winId].close();
-        delete windows[winId];
-    }
-
-    CONFIG.addButton(button);
-    CONFIG.saveButtons();
-
-    mainWindow.webContents.send('button_update', button);
-});*/
+*/
 
 
 /* === Functions === */
