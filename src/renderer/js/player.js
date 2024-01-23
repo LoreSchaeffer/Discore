@@ -2,34 +2,68 @@ const Player = class {
     constructor() {
         this.eventHandlers = {};
         this.audio = new Audio();
+        this.queue = [];
+        this.index = 0;
         this.currentTrack = null;
-        this.endTime = null;
         this.isPlaying = false;
+        this.loop = 0; // 0: none, 1: loop all, 2: loop one
 
         this.audio.addEventListener('timeupdate', this.timeupdate.bind(this));
         this.audio.addEventListener('play', () => {
             this.isPlaying = true;
-
             this.dispatchEvent('play', this.currentTrack);
         });
     }
 
-    async play(track, startTime, endTime) {
-        if (this.currentTrack != null) this.stop();
-        this.currentTrack = track;
-        this.endTime = endTime;
-        let src;
+    addToQueue(track) {
+        this.queue.push(track);
+    }
 
-        if (track.uri.startsWith('https')) {
-            src = track.url;
-        } else {
-            src = track.uri;
+    clearQueue() {
+        this.queue = [];
+        this.index = 0;
+    }
+
+    next() {
+        this.index++;
+        if (this.loop === 1 && this.index >= this.queue.length) this.index = 0;
+    }
+
+    previous() {
+        this.index--;
+        if (this.index < 0) this.index = this.queue.length - 1;
+    }
+
+    loop(mode) {
+        this.loop = mode;
+    }
+
+    async play() {
+        if (this.isPlaying) this.stop();
+
+        if (this.queue.length === 0) return;
+
+        this.currentTrack = this.queue[this.index];
+        await this._play();
+    }
+
+    async playNow(track) {
+        if (this.isPlaying) this.stop();
+
+        this.currentTrack = track;
+        await this._play();
+    }
+
+    async _play() {
+        this.audio.src = this.currentTrack.url;
+        this.audio.load();
+
+        if (this.currentTrack.start_time) {
+            const startTime = new Time(this.currentTrack.start_time, this.currentTrack.start_time_unit);
+            if (this.currentTrack.startTime) this.audio.currentTime = startTime.toSeconds();
         }
 
-        this.audio.src = src;
-        this.audio.load();
-        if (startTime) this.audio.currentTime = startTime / 1000;
-        return this.audio.play();
+        this.audio.play();
     }
 
     stop() {
@@ -38,7 +72,6 @@ const Player = class {
 
         this.isPlaying = false;
         this.currentTrack = null;
-        this.endTime = null;
 
         this.dispatchEvent('stop');
     }
@@ -58,31 +91,35 @@ const Player = class {
     resume() {
         this.audio.play().then(() => {
             this.isPlaying = true;
-
             this.dispatchEvent('resume');
         });
-    }
-
-    setVolume(volume) {
-        this.audio.volume = volume / 100;
     }
 
     seekTo(time) {
         this.audio.currentTime = time;
     }
 
+
+    setVolume(volume) {
+        this.audio.volume = volume / 100;
+    }
+
     setOutputDevice(deviceId) {
         this.audio.setSinkId(deviceId).catch((e) => {});
     }
 
-    timeupdate() {
-        const currentTime = Math.round(this.audio.currentTime) + 1;
-        this.dispatchEvent('timeupdate', currentTime);
 
-        if (this.currentTrack == null) return;
-        if (currentTime >= this.currentTrack.duration) this.stop();
-        if (this.audio.currentTime * 1000 >= this.endTime) this.stop();
+    timeupdate() {
+        if (!this.isPlaying) return;
+
+        // const currentTime = Math.round(this.audio.currentTime) + 1;
+        // this.dispatchEvent('timeupdate', currentTime);
+        //
+        // if (this.currentTrack == null) return;
+        // if (currentTime >= this.currentTrack.duration) this.stop();
+        // if (this.audio.currentTime * 1000 >= this.endTime) this.stop();
     }
+
 
     addEventListener(eventName, handler) {
         if (!this.eventHandlers[eventName]) {

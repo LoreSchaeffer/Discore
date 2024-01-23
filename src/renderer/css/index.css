@@ -258,7 +258,6 @@
     right: 12px;
 }
 
-
 @media screen and (max-width: 1225px) {
     #progressBar {
         min-width: 450px;

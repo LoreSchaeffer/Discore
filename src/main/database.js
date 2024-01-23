@@ -232,6 +232,11 @@ const Database = class {
                 url: button.url || null,
                 duration: button.duration,
                 thumbnail: button.thumbnail || null,
+                start_time: button.start_time || null,
+                start_time_unit: button.start_time_unit || null,
+                end_time_type: button.end_time_type || null,
+                end_time: button.end_time || null,
+                end_time_unit: button.end_time_unit || null,
             }, {
                 where: {profile_id: profile, row: button.row, col: button.col}
             });

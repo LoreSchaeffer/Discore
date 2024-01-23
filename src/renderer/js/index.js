@@ -43,6 +43,7 @@ $(document).ready(async () => {
     player.addEventListener('timeupdate', onTimeUpdate);
 
     sbSettings = await window.electronAPI.getSoundboardSettings();
+    player.setVolume(sbSettings.volume);
 
     window.electronAPI.getProfiles().then((profiles) => {
         profile = profiles.find((p) => p.id === sbSettings.active_profile);
@@ -258,8 +259,9 @@ function setEmptyButton(row, col) {
 /* BUTTON EVENTS */
 
 async function sbLeftClick() {
-    const button = await window.electronAPI.getButton(profile.id, parseInt($(this).attr('data-row')), parseInt($(this).attr('data-col')));
-    if (button == null) return;
+    const track = await window.electronAPI.getTrack(profile.id, parseInt($(this).attr('data-row')), parseInt($(this).attr('data-col')));
+    if (track == null) return;
+    player.playNow(track);
 
     //TODO
 
@@ -459,7 +461,7 @@ function onPlay(track) {
     currentTime.text(formatDuration(0));
     currentTime.show();
 
-    duration.text(formatDuration(track.duration));
+    duration.text(formatDuration(track.duration / 1000));
     duration.show();
 
     trackName.text(track.title);

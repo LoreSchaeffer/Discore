@@ -49,6 +49,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Buttons
     getButtons: (profile) => ipcRenderer.invoke('get_buttons', profile),
     getButton: (profile, row, col) => ipcRenderer.invoke('get_button', profile, row, col),
+    getTrack: (profile, row, col) => ipcRenderer.invoke('get_track', profile, row, col),
     setButton: (profile, button, winId) => ipcRenderer.send('set_button', profile, button, winId),
     swapButtons: (profile, row1, col1, row2, col2) => ipcRenderer.invoke('swap_buttons', profile, row1, col1, row2, col2),
     deleteButton: (profile, row, col) => ipcRenderer.send('delete_button', profile, row, col),

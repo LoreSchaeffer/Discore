@@ -2,6 +2,7 @@ const {app, BrowserWindow, ipcMain, shell, dialog, globalShortcut} = require('el
 const {video_basic_info} = require('play-dl');
 const path = require('path');
 const play = require('play-dl');
+const https = require('https');
 const mm = require('music-metadata');
 const Config = require('./config');
 const Database = require('./database');
@@ -12,6 +13,9 @@ const CONFIG = new Config(CONFIG_DIR);
 const DB = new Database(CONFIG_DIR);
 const windows = {};
 let mainWindow;
+
+//TODO Find metadata for local files
+//TODO Use online metadata service
 
 if (require('electron-squirrel-startup')) {
     app.quit();
@@ -235,6 +239,38 @@ ipcMain.handle('get_button', (event, profile, row, col) => {
     return DB.getButton(profile, row, col);
 });
 
+ipcMain.handle('get_track', (event, profile, row, col) => {
+    try {
+        return new Promise(async (resolve, reject) => {
+            const button = await DB.getButton(profile, row, col);
+            if (button == null) return reject();
+
+            if (isYouTubeUrl(button.uri)) {
+                if (!(await isYouTubeUrlValid(button.url))) {
+                    button.url = await getStreamUrl(button.uri);
+                    DB.updateButton(profile, button);
+                }
+            }
+
+            const track = {
+                title: button.title,
+                uri: button.uri,
+                url: button.url != null ? button.url : button.uri,
+                duration: button.duration,
+                thumbnail: button.thumbnail,
+                start_time: button.start_time,
+                end_time_type: button.end_time_type,
+                end_time: button.end_time,
+                end_time_unit: button.end_time_unit
+            };
+
+            resolve(track);
+        });
+    } catch (e) {
+        return null;
+    }
+});
+
 ipcMain.on('set_button', async (event, profile, button, winId) => {
     const btn = await setButton(profile, button);
     if (btn != null) {
@@ -306,134 +342,6 @@ ipcMain.handle('search', (event, query) => {
         return [];
     }
 });
-
-
-/*
-ipcMain.on('play_now', async (event, winId, uri, track) => {
-    if (winId === null) {
-        CONFIG.removeButton(row, col);
-        CONFIG.saveButtons();
-        return;
-    }
-
-    windows[winId].close();
-    delete windows[winId];
-
-    if (track != null) {
-        try {
-            const stream = await play.stream(track.uri);
-            track.url = stream.url;
-        } catch (e) {
-            console.log(e);
-        }
-    } else {
-        track = {
-            title: '',
-            uri: uri,
-            duration: 0,
-            thumbnail: ''
-        }
-
-        if (isYouTubeUrl(uri)) {
-            const info = await video_basic_info(uri);
-            track.title = info.video_details.title;
-            track.uri = uri;
-            track.duration = info.video_details.durationInSec;
-            track.thumbnail = info.video_details.thumbnails[0].url;
-        } else {
-            try {
-                const meta = await mm.parseFile(uri);
-                if (meta != null) {
-                    if (meta.common.title != null) track.title = meta.common.title;
-                    else track.title = path.basename(uri);
-                    track.duration = Math.round(meta.format.duration);
-                }
-            } catch (e) {
-                console.log(e);
-            }
-        }
-    }
-
-    track.title = track.title.trim();
-
-    mainWindow.webContents.send('play_now', track);
-});
-
-ipcMain.on('set_button', async (event, winId, row, col, uri, track) => {
-    if (winId === null) {
-        CONFIG.removeButton(row, col);
-        CONFIG.saveButtons();
-        return;
-    }
-
-    windows[winId].close();
-    delete windows[winId];
-
-    if (track != null) {
-        try {
-            const stream = await play.stream(track.uri);
-            track.url = stream.url;
-        } catch (e) {
-            console.log(e);
-        }
-    } else {
-        track = {
-            title: '',
-            uri: uri,
-            duration: 0,
-            thumbnail: ''
-        }
-
-        if (isYouTubeUrl(uri)) {
-            const info = await video_basic_info(uri);
-            track.title = info.video_details.title;
-            track.uri = uri;
-            track.duration = info.video_details.durationInSec;
-            track.thumbnail = info.video_details.thumbnails[0].url;
-        } else {
-            try {
-                const meta = await mm.parseFile(uri);
-                if (meta != null) {
-                    if (meta.common.title != null) track.title = meta.common.title;
-                    else track.title = path.basename(uri);
-                    track.duration = Math.round(meta.format.duration);
-                }
-            } catch (e) {
-                console.log(e);
-            }
-        }
-    }
-
-    track.title = track.title.trim();
-
-    const button = {
-        row: row,
-        col: col,
-        title: track.title,
-        track: track
-    };
-
-    CONFIG.addButton(button);
-    CONFIG.saveButtons();
-
-    mainWindow.webContents.send('button_update', button);
-});
-
-ipcMain.handle('get_new_url', async (event, row, col) => {
-    const button = CONFIG.getButton(row, col);
-    if (button == null) return null;
-
-    try {
-        button.track.url = (await play.stream(button.track.uri)).url;
-        CONFIG.addButton(button);
-        CONFIG.saveButtons();
-
-        return button.track.url;
-    } catch (e) {
-        console.log(e);
-    }
-});
-*/
 
 
 /* === Functions === */
@@ -553,6 +461,28 @@ async function setButton(profile, button) {
     } catch (e) {
         console.log(e);
     }
+}
+
+async function getStreamUrl(uri) {
+    try {
+        const stream = await play.stream(uri);
+        return stream.url;
+    } catch (e) {
+        return null;
+    }
+}
+
+function isYouTubeUrlValid(url) {
+    return new Promise((resolve, reject) => {
+        if (url == null) resolve(false);
+
+        https.get(url, (res) => {
+            if (res.statusCode === 403) resolve(false);
+            else resolve(true);
+        }).on('error', (error) => {
+            resolve(false);
+        });
+    });
 }
 
 function isYouTubeUrl(url) {
