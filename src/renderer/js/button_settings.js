@@ -1,5 +1,12 @@
 const uri = $('#uri');
 const title = $('#title');
+
+const startTime = $('#startTime');
+const startTimeUnit = $('#startTimeUnit');
+const endTimeType = $('#endTimeType');
+const endTime = $('#endTime');
+const endTimeUnit = $('#endTimeUnit');
+
 const backgroundColor = $('#backgroundColor');
 const backgroundColorReset = $('#resetBackgroundColor');
 const backgroundHoverColor = $('#backgroundHoverColor');
@@ -12,13 +19,7 @@ const borderColor = $('#borderColor');
 const borderColorReset = $('#resetBorderColor');
 const borderHoverColor = $('#borderHoverColor');
 const borderHoverColorReset = $('#resetBorderHoverColor');
-const preview = $('#preview');
-const previewText = $('#previewText');
-const startTime = $('#startTime');
-const startTimeUnit = $('#startTimeUnit');
-const endTime = $('#endTime');
-const endTimeUnit = $('#endTimeUnit');
-const endTimeType = $('#endTimeType');
+
 const discardBtn = $('#discard');
 const saveBtn = $('#save');
 
@@ -26,225 +27,339 @@ let row;
 let col;
 let button;
 
-/*$(document).ready(() => {
-    $('#stylePreview').css('height', $('#styleSettings').height() + 'px');
-});
+window.electronAPI.handleButton((event, btn) => {
+    button = btn;
 
-window.electronAPI.handleRC((event, r, c) => {
-    row = r;
-    col = c;
+    $('#navProfileContainer').prepend($(`<span id="btnTitle">Button ${btn.row + 1} . ${btn.col + 1}</span>`));
 
-    $('#buttonTitle').text('Button ' + (row + 1) + ' . ' + (col + 1));
-});
+    if (button.uri) uri.val(button.uri);
+    if (button.title) title.val(button.title);
 
-window.electronAPI.handleButton((event, b) => {
-    button = b;
+    if (button.start_time) startTime.val(button.start_time);
+    if (button.start_time_unit) startTimeUnit.val(button.start_time_unit);
+    if (button.end_time_type) endTimeType.val(button.end_time_type);
+    if (button.end_time) endTime.val(button.end_time);
+    if (button.end_time_unit) endTimeUnit.val(button.end_time_unit);
 
-    uri.val(button.track.uri);
-    uri.addClass('active');
-    if (button.title) {
-        title.val(button.title);
-        title.addClass('active');
-
-        previewText.text(button.title);
+    if (button.bg_color) {
+        const input = backgroundColor.find('input');
+        input.val(button.bg_color);
+        input.trigger('change');
+    }
+    if (button.bg_h_color) {
+        const input = backgroundHoverColor.find('input');
+        input.val(button.bg_h_color);
+        input.trigger('change');
+    }
+    if (button.txt_color) {
+        const input = textColor.find('input');
+        input.val(button.txt_color);
+        input.trigger('change');
+    }
+    if (button.txt_h_color) {
+        const input = textHoverColor.find('input');
+        input.val(button.txt_h_color);
+        input.trigger('change');
+    }
+    if (button.brd_color) {
+        const input = borderColor.find('input');
+        input.val(button.brd_color);
+        input.trigger('change');
+    }
+    if (button.brd_h_color) {
+        const input = borderHoverColor.find('input');
+        input.val(button.brd_h_color);
+        input.trigger('change');
     }
 
-    if (button.background_color) backgroundColor.val(button.background_color);
-    if (button.background_hover_color) backgroundHoverColor.val(button.background_hover_color);
-    if (button.text_color) textColor.val(button.text_color);
-    if (button.text_hover_color) textHoverColor.val(button.text_hover_color);
-    if (button.border_color) borderColor.val(button.border_color);
-    if (button.border_hover_color) borderHoverColor.val(button.border_hover_color);
+    createPreview();
+});
 
-    preview.css('background-color', button.background_color ? button.background_color : 'var(--def-button)');
-    preview.css('border-color', button.border_color ? button.border_color : 'transparent');
-    previewText.css('color', button.text_color ? button.text_color : 'var(--def-text');
+window.electronAPI.handleButtonUpdate((event, btn) => {
+    button = btn;
+    console.log(btn);
+
+    uri.val(button.uri);
+    title.val(button.title);
+    $('#preview .sb-btn-title').text(button.title);
+    $('#preview .sb-btn-img').css('background-image', `url("${button.thumbnail}")`);
+});
+
+function createPreview() {
+    const preview = $(`<div id="preview" class="sb-btn"></div>`);
+    const icon = $('<div class="sb-btn-img">');
+    const text = $(`<span class="sb-btn-title"></span>`);
+
+    if (button.thumbnail) icon.css('background-image', `url("${button.thumbnail}")`);
+    else icon.css('background-image', 'url("images/track.png")');
+
+    if (button.title) text.text(button.title);
+    else text.text('Button ' + (button.row + 1) + ' . ' + (button.col + 1));
+
+    if (button.bg_color) preview.css('background-color', button.bg_color);
+    else preview.css('background-color', 'var(--def-button)');
+
+    if (button.brd_color) preview.css('border-color', button.brd_color);
+    else preview.css('border-color', 'transparent');
+
+    if (button.txt_color) text.css('color', button.txt_color);
+    else text.css('color', 'var(--def-text');
 
     preview.hover(() => {
-        preview.css('background-color', button.background_hover_color ? button.background_hover_color : 'var(--def-button-hover)');
-        previewText.css('color', button.text_hover_color ? button.text_hover_color : 'var(--def-text-hover');
-        preview.css('border-color', button.border_hover_color ? button.border_hover_color : 'transparent');
+        if (button.bg_h_color) preview.css('background-color', button.bg_h_color);
+        else preview.css('background-color', 'var(--def-button-hover)');
+
+        if (button.brd_h_color) preview.css('border-color', button.brd_h_color);
+        else preview.css('border-color', 'transparent');
+
+        if (button.txt_h_color) text.css('color', button.txt_h_color);
+        else text.css('color', 'var(--def-text-hover');
     }, () => {
-        preview.css('background-color', button.background_color ? button.background_color : 'var(--def-button)');
-        preview.css('border-color', button.border_color ? button.border_color : 'transparent');
-        previewText.css('color', button.text_color ? button.text_color : 'var(--def-text');
+        if (button.bg_color) preview.css('background-color', button.bg_color);
+        else preview.css('background-color', 'var(--def-button)');
+
+        if (button.brd_color) preview.css('border-color', button.brd_color);
+        else preview.css('border-color', 'transparent');
+
+        if (button.txt_color) text.css('color', button.txt_color);
+        else text.css('color', 'var(--def-text');
+
     });
 
-    if (button.start_time) {
-        startTimeUnit.val(button.start_time_unit);
-        startTime.val(button.start_time);
-    }
-
-    if (button.end_type) {
-        endTimeType.val(button.end_type);
-        endTimeUnit.val(button.end_time_unit);
-        endTime.val(button.end_time);
-    }
-
-});
-
-window.electronAPI.handleButtonUpdate((event, b) => {
-    button.track = b.track;
-
-    button.title = b.track.title;
-    title.val(button.title);
-    title.addClass('active');
-
-    previewText.text(button.title);
-})
+    preview.append(icon);
+    preview.append(text);
+    $('#stylePreview').append(preview);
+}
 
 $('#openMediaSelector').click(() => {
-    window.electronAPI.openMediaSelector(row, col, winId);
-});
+    window.electronAPI.openMediaSelector(button.profile_id, button.row, button.col, winId);
+})
 
 title.change(() => {
     button.title = title.val();
-    previewText.text(button.title);
-});
-
-backgroundColor.change(() => {
-    button.background_color = backgroundColor.val();
-    preview.css('background-color', backgroundColor.val());
-});
-
-backgroundHoverColor.change(() => {
-    button.background_hover_color = backgroundHoverColor.val();
-    preview.hover(() => {
-        preview.css('background-color', backgroundHoverColor.val());
-    }, () => {
-        preview.css('background-color', button.background_color ? button.background_color : 'var(--def-button)');
-    })
-});
-
-textColor.change(() => {
-    button.text_color = textColor.val();
-    previewText.css('color', textColor.val());
-});
-
-textHoverColor.change(() => {
-    button.text_hover_color = textHoverColor.val();
-    previewText.hover(() => {
-        previewText.css('color', textHoverColor.val());
-    }, () => {
-        previewText.css('color', button.text_color ? button.text_color : 'var(--def-text');
-    })
-});
-
-borderColor.change(() => {
-    button.border_color = borderColor.val();
-    preview.css('border-color', borderColor.val());
-});
-
-borderHoverColor.change(() => {
-    button.border_hover_color = borderHoverColor.val();
-    preview.hover(() => {
-        preview.css('border-color', borderHoverColor.val());
-    }, () => {
-        preview.css('border-color', button.border_color ? button.border_color : 'transparent');
-    })
-});
-
-backgroundColorReset.click(() => {
-    delete button.background_color;
-    preview.css('background-color', 'var(--def-button)');
-    backgroundColor.val('');
-});
-
-backgroundHoverColorReset.click(() => {
-    delete button.background_hover_color;
-    preview.hover(() => {
-        preview.css('background-color', 'var(--def-button-hover)');
-    }, () => {
-        preview.css('background-color', button.background_color ? button.background_color : 'var(--def-button)');
-    });
-    backgroundHoverColor.val('');
-});
-
-textColorReset.click(() => {
-    delete button.text_color;
-    previewText.css('color', 'var(--def-text)');
-    textColor.val('');
-});
-
-textHoverColorReset.click(() => {
-    delete button.text_hover_color;
-    previewText.hover(() => {
-        previewText.css('color', 'var(--def-text-hover)');
-    }, () => {
-        previewText.css('color', button.text_color ? button.text_color : 'var(--def-text)');
-    });
-    textHoverColor.val('');
-});
-
-borderColorReset.click(() => {
-    delete button.border_color;
-    preview.css('border-color', 'transparent');
-    borderColor.val('');
-});
-
-borderHoverColorReset.click(() => {
-    delete button.border_hover_color;
-    preview.hover(() => {
-        preview.css('border-color', 'var(--def-border-hover)');
-    }, () => {
-        preview.css('border-color', button.border_color ? button.border_color : 'transparent');
-    });
-    borderHoverColor.val('');
+    $('#preview .sb-btn-title').text(button.title);
 });
 
 startTime.change(() => {
-    let time = parseInt(startTime.val());
-    if (time < 0) {
-        time = 0;
+    const time = new Time(parseInt(startTime.val()), startTimeUnit.val());
+
+    if (time.time < 0) {
+        time.time = 0;
+
         startTime.val(0);
-    } else if (time * getTimeMultiplier(startTimeUnit.val()) > button.track.duration * 1000) {
-        time = convertToUnit(startTimeUnit.val(), button.track.duration);
-        startTime.val(time);
+    } else if (time.isGreaterThan(button.duration, 'ms')) {
+        time.setTime(button.duration, 'ms');
+        time.toSeconds();
+
+        startTime.val(time.time);
+        startTimeUnit.val(time.unit);
     }
 
-    button.start_time = time;
-    button.start_time_unit = startTimeUnit.val();
+    button.start_time = time.time;
+    button.start_time_unit = time.unit;
 });
 
 startTimeUnit.change(() => {
-    button.start_time_unit = startTimeUnit.val();
-});
+    const time = new Time(parseInt(startTime.val()), button.start_time_unit ? button.start_time_unit : 's');
 
-endTime.change(() => {
-    let time = parseInt(endTime.val());
+    time.convertUnit(startTimeUnit.val());
 
-    if (endTimeType.val() === 'after') {
-        if (time < 0) {
-            time = 0;
-            endTime.val(0);
-        } else if (parseInt(startTime.val()) * getTimeMultiplier(startTimeUnit.val()) + time * getTimeMultiplier(endTimeUnit.val()) > button.track.duration * 1000) {
-            time = convertToUnit(endTimeUnit.val(), button.track.duration) - convertToUnit(startTimeUnit.val(), parseInt(startTime.val()));
-            endTime.val(time);
-        }
-    } else {
-        if (time < 0) {
-            time = 0;
-            endTime.val(0);
-        } else if (time * getTimeMultiplier(endTimeUnit.val()) > button.track.duration * 1000) {
-            time = convertToUnit(endTimeUnit.val(), button.track.duration);
-            endTime.val(time);
-        } else if (time * getTimeMultiplier(endTimeUnit.val()) < parseInt(startTime.val()) * getTimeMultiplier(startTimeUnit.val())) {
-            time = convertToUnit(startTimeUnit.val(), parseInt(startTime.val()));
-            endTime.val(time);
-        }
-    }
+    startTime.val(time.time);
 
-    button.end_time = time;
-    button.end_time_unit = endTimeUnit.val();
-    button.end_type = endTimeType.val();
+    button.start_time = time.time;
+    button.start_time_unit = time.unit;
 });
 
 endTimeType.change(() => {
-    button.end_type = endTimeType.val();
+    if (endTimeType.val() === 'at') {
+        const eTime = new Time(parseInt(endTime.val()), endTimeUnit.val());
+
+        if (eTime.isGreaterThan(button.duration, 'ms')) {
+            eTime.setTime(button.duration, 'ms');
+            eTime.toSeconds();
+
+            endTime.val(eTime.time);
+            endTimeUnit.val(eTime.unit);
+
+            button.end_time = eTime.time;
+            button.end_time_unit = eTime.unit;
+        }
+
+        button.end_time_type = 'at';
+    } else if (endTimeType.val() === 'after') {
+        const eTime = new Time(parseInt(endTime.val()), endTimeUnit.val());
+        const sTime = new Time(parseInt(startTime.val()), startTimeUnit.val());
+
+        if (eTime.isGreaterThan(button.duration - sTime.toMilliseconds(), 'ms')) {
+            eTime.setTime(button.duration - sTime.toMilliseconds(), 'ms');
+            eTime.toSeconds();
+
+            endTime.val(eTime.time);
+            endTimeUnit.val(eTime.unit);
+
+            button.end_time = eTime.time;
+            button.end_time_unit = eTime.unit;
+        }
+
+        button.end_time_type = 'after';
+    }
+});
+
+endTime.change(() => {
+    const eTime = new Time(parseInt(endTime.val()), endTimeUnit.val());
+
+    if (eTime.time < 0) {
+        eTime.time = 0;
+
+        endTime.val(0);
+    } else {
+        if (endTimeType.val() === 'at') {
+            if (eTime.isGreaterThan(button.duration, 'ms')) {
+                eTime.setTime(button.duration, 'ms');
+                eTime.toSeconds();
+
+                endTime.val(eTime.time);
+                endTimeUnit.val(eTime.unit);
+
+                button.end_time = eTime.time;
+                button.end_time_unit = eTime.unit;
+            }
+        } else if (endTimeType.val() === 'after') {
+            const eTime = new Time(parseInt(endTime.val()), endTimeUnit.val());
+            const sTime = new Time(parseInt(startTime.val()), startTimeUnit.val());
+
+            if (eTime.isGreaterThan(button.duration - sTime.toMilliseconds(), 'ms')) {
+                eTime.setTime(button.duration - sTime.toMilliseconds(), 'ms');
+                eTime.toSeconds();
+
+                endTime.val(eTime.time);
+                endTimeUnit.val(eTime.unit);
+
+                button.end_time = eTime.time;
+                button.end_time_unit = eTime.unit;
+            }
+        }
+    }
 });
 
 endTimeUnit.change(() => {
-    button.end_time_unit = endTimeUnit.val();
+    const eTime = new Time(parseInt(startTime.val()), button.end_time_unit ? button.end_time_unit : 's');
+    eTime.convertUnit(endTimeUnit.val());
+
+    endTime.val(eTime.time);
+
+    button.end_time = eTime.time;
+    button.end_time_unit = eTime.unit;
+});
+
+backgroundColor.change(() => {
+    button.bg_color = backgroundColor.find('input').val();
+    $('#preview').css('background-color', button.bg_color);
+});
+
+backgroundHoverColor.change(() => {
+    button.bg_h_color = backgroundHoverColor.find('input').val();
+    $('#preview').hover(() => {
+        $('#preview').css('background-color', button.bg_h_color);
+    }, () => {
+        $('#preview').css('background-color', button.bg_color);
+    });
+
+});
+
+textColor.change(() => {
+    button.txt_color = textColor.find('input').val();
+    $('#preview .sb-btn-title').css('color', button.txt_color);
+});
+
+textHoverColor.change(() => {
+    button.txt_h_color = textHoverColor.find('input').val();
+    $('#preview').hover(() => {
+        $('#preview .sb-btn-title').css('color', button.txt_h_color);
+    }, () => {
+        $('#preview .sb-btn-title').css('color', button.txt_color);
+    });
+
+});
+
+borderColor.change(() => {
+    button.brd_color = borderColor.find('input').val();
+    $('#preview').css('border-color', button.brd_color);
+});
+
+borderHoverColor.change(() => {
+    button.brd_h_color = borderHoverColor.find('input').val();
+    $('#preview').hover(() => {
+        $('#preview').css('border-color', button.brd_h_color);
+    }, () => {
+        $('#preview').css('border-color', button.brd_color);
+    });
+});
+
+backgroundColorReset.click(() => {
+    const input = backgroundColor.find('input');
+    input.val('');
+    input.trigger('change');
+
+    delete button.bg_color;
+    $('#preview').css('background-color', 'var(--def-button)');
+});
+
+backgroundHoverColorReset.click(() => {
+    const input = backgroundHoverColor.find('input');
+    input.val('');
+    input.trigger('change');
+
+    delete button.bg_h_color;
+    $('#preview').hover(() => {
+        $('#preview').css('background-color', 'var(--def-button-hover)');
+    }, () => {
+        $('#preview').css('background-color', 'var(--def-button)');
+    });
+});
+
+textColorReset.click(() => {
+    const input = textColor.find('input');
+    input.val('');
+    input.trigger('change');
+
+    delete button.txt_color;
+    $('#preview .sb-btn-title').css('color', 'var(--def-text)');
+});
+
+textHoverColorReset.click(() => {
+    const input = textHoverColor.find('input');
+    input.val('');
+    input.trigger('change');
+
+    delete button.txt_h_color;
+    $('#preview').hover(() => {
+        $('#preview .sb-btn-title').css('color', 'var(--def-text-hover)');
+    }, () => {
+        $('#preview .sb-btn-title').css('color', 'var(--def-text)');
+    });
+});
+
+borderColorReset.click(() => {
+    const input = borderColor.find('input');
+    input.val('');
+    input.trigger('change');
+
+    delete button.brd_color;
+    $('#preview').css('border-color', 'transparent');
+});
+
+borderHoverColorReset.click(() => {
+    const input = borderHoverColor.find('input');
+    input.val('');
+    input.trigger('change');
+
+    delete button.brd_h_color;
+    $('#preview').hover(() => {
+        $('#preview').css('border-color', 'var(--def-border-hover)');
+    }, () => {
+        $('#preview').css('border-color', 'transparent');
+    });
 });
 
 discardBtn.click(() => {
@@ -252,17 +367,84 @@ discardBtn.click(() => {
 });
 
 saveBtn.click(() => {
-    window.electronAPI.updateButton(winId, button);
+    window.electronAPI.setButton(button.profile_id, button, winId);
+    window.electronAPI.close(winId);
 });
 
-function getTimeMultiplier(val) {
-    if (val === 'ms') return 1;
-    else if (val === 's') return 1000;
-    else if (val === 'm') return 60000;
-}
 
-function convertToUnit(unit, duration) {
-    if (unit === 'ms') return duration * 1000;
-    else if (unit === 's') return duration;
-    else if (unit === 'm') return Math.floor(duration / 60);
-}*/
+class Time {
+    constructor (time, unit) {
+        if (time === undefined || unit === undefined) throw new Error('Time and unit must be defined');
+        if (typeof time !== 'number') throw new Error('Time must be a number');
+        if (typeof unit !== 'string') throw new Error('Unit must be a string');
+        if (unit !== 'ms' && unit !== 's' && unit !== 'm') throw new Error('Unit must be ms, s or m');
+
+        this.time = time;
+        this.unit = unit;
+    }
+
+    toMilliseconds() {
+        if (this.unit === 's') {
+            this.time = this.time * 1000;
+            this.unit = 'ms';
+        } else if (this.unit === 'm') {
+            this.time = this.time * 60000;
+            this.unit = 'ms';
+        }
+
+        return this.time;
+    }
+
+    toSeconds() {
+        if (this.unit === 'ms') {
+            this.time = Math.round(this.time / 1000);
+            this.unit = 's';
+        } else if (this.unit === 'm') {
+            this.time = this.time * 60;
+            this.unit = 's';
+        }
+
+        return this.time;
+    }
+
+    toMinutes() {
+        if (this.unit === 'ms') {
+            this.time = Math.round(this.time / 60000);
+            this.unit = 'm';
+        } else if (this.unit === 's') {
+            this.time = Math.round(this.time / 60);
+            this.unit = 'm';
+        }
+
+        return this.time;
+    }
+
+    convertUnit(unit) {
+        if (unit === 'ms') this.toMilliseconds();
+        else if (unit === 's') this.toSeconds();
+        else if (unit === 'm') this.toMinutes();
+
+        return this.time;
+    }
+
+    setTime(time, unit) {
+        this.time = time;
+        this.unit = unit;
+    }
+
+    isGreaterThan(time, unit) {
+        if (unit === 'ms') {
+            if (this.unit === 'ms') return this.time > time;
+            else if (this.unit === 's') return this.time * 1000 > time;
+            else if (this.unit === 'm') return this.time * 60000 > time;
+        } else if (unit === 's') {
+            if (this.unit === 'ms') return this.time > time * 1000;
+            else if (this.unit === 's') return this.time > time;
+            else if (this.unit === 'm') return this.time * 60 > time;
+        } else if (unit === 'm') {
+            if (this.unit === 'ms') return this.time > time * 60000;
+            else if (this.unit === 's') return this.time > time * 60;
+            else if (this.unit === 'm') return this.time > time;
+        }
+    }
+}

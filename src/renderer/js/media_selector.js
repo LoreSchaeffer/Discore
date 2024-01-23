@@ -6,12 +6,12 @@ const resultsContainer = $('#results');
 const discardBtn = $('#discard');
 const saveBtn = $('#save');
 
+let parentId = -1;
 let button = null;
-let newButton = false;
+let callback = null;
 
-window.electronAPI.handleButton((event, btn, isNew) => {
+window.electronAPI.handleButton((event, btn) => {
     button = btn;
-    newButton = isNew;
 
     if (btn != null) {
         $('#navProfileContainer').prepend($(`<span id="btnTitle">Button ${btn.row + 1} . ${btn.col + 1}</span>`));
@@ -19,6 +19,14 @@ window.electronAPI.handleButton((event, btn, isNew) => {
         $('#navProfileContainer').prepend($(`<span id="btnTitle">Play now</span>`));
         saveBtn.html('<span class="material-symbols-rounded">play</span>Play');
     }
+});
+
+window.electronAPI.handleParent((event, id) => {
+    parentId = id;
+});
+
+window.electronAPI.handleCallback((event, c) => {
+    callback = c;
 });
 
 $(document).ready(() => {
@@ -63,9 +71,7 @@ saveBtn.click(() => {
         button.duration = track.duration;
         button.thumbnail = track.thumbnail;
 
-        if (newButton) window.electronAPI.setButton(button.profile, button);
-        else window.electronAPI.updateButton(button.profile, button);
-
+        window.electronAPI.mediaSelectorButton(button.profile_id, button, parentId, callback);
         window.electronAPI.close(winId);
     } else {
         window.electronAPI.playNow(track);
@@ -83,7 +89,6 @@ function search() {
 
         const elements = $('.result');
         elements.on('click', function () {
-            console.log('click');
             const element = $(this);
             if (element.hasClass('active')) return;
 
@@ -111,7 +116,7 @@ function createResult(track) {
 
     resultElement.append(thumbnailElement);
     resultElement.append(`<div class="title-block"><h2 class="title">${escapeHtml(track.title)}</h2><p class="url" data-target="${track.uri}">${track.uri}</p></div>`);
-    resultElement.append(`<p class="duration">${formatDuration(track.duration)}</p>`);
+    resultElement.append(`<p class="duration">${formatDuration(track.duration / 1000)}</p>`);
 
     resultsContainer.append(resultElement);
 }

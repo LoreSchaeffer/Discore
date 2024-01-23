@@ -2,6 +2,8 @@ let navMinimize;
 let navMaximize;
 let navClose;
 
+let hasParent = false;
+let isResizable = true;
 let winId = -1;
 let contextMenu;
 
@@ -17,6 +19,21 @@ const nav = $(`<nav class="navbar navbar-expand navbar-dark background-tertiary 
     </div>
 </nav>`);
 
+window.electronAPI.handleReady((event, id, parent, resizable) => {
+    winId = id;
+    hasParent = parent;
+    isResizable = resizable;
+
+    if (hasParent) {
+        navMinimize.off('click');
+        navMinimize.remove();
+    }
+    if (!isResizable) {
+        navMaximize.off('click');
+        navMaximize.remove();
+    }
+});
+
 $(document).ready(() => {
     $('body').prepend(nav);
 
@@ -24,16 +41,12 @@ $(document).ready(() => {
     navMaximize = $('#navMaximize');
     navClose = $('#navClose');
 
-    navMinimize.click(() => window.electronAPI.minimize(winId));
-    navMaximize.click(() => window.electronAPI.maximize(winId));
+    if (hasParent) navMinimize.remove();
+    if (!isResizable) navMaximize.remove();
+
+    if (!hasParent) navMinimize.click(() => window.electronAPI.minimize(winId));
+    if (isResizable) navMaximize.click(() => window.electronAPI.maximize(winId));
     navClose.click(() => window.electronAPI.close(winId));
-
-    window.electronAPI.handleReady((event, id, hasParent, isResizable) => {
-        winId = id;
-
-        if (hasParent) navMinimize.remove();
-        if (!isResizable) navMaximize.remove();
-    });
 
     $(document).click((e) => hideContextMenu(e));
     $(document).contextmenu((e) => hideContextMenu(e));
@@ -142,6 +155,7 @@ $(document).ready(() => {
     $('.colorpicker').each(function () {
         const container = $(this);
         const input = $(`<input type="color">`);
+        if (container.attr('data-id') !== undefined) input.attr('id', container.attr('data-id'));
         const preview = $(`<div class="colorpicker-preview"></div>`);
 
         preview.css('background-color', input.val());
@@ -152,7 +166,6 @@ $(document).ready(() => {
         preview.click(() => input.click());
         input.change(() => {
             preview.css('background-color', input.val());
-            container.trigger('change');
         });
     });
 });

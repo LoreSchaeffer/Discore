@@ -78,12 +78,11 @@ app.on('will-quit', async () => {
 
 // Navbar
 ipcMain.on('minimize', (event, winId) => {
-    if (winId === -1) mainWindow.minimize();
-    else windows[winId].minimize();
+    getWindow(winId).minimize();
 });
 
 ipcMain.on('maximize', (event, winId) => {
-    const win = winId === -1 ? mainWindow : windows[winId];
+    const win = getWindow(winId)
     if (!win.isResizable) return;
 
     if (win.isMaximized()) win.restore();
@@ -95,7 +94,7 @@ ipcMain.on('close', (event, winId) => {
         mainWindow.close();
         app.quit();
     } else {
-        windows[winId].close();
+        getWindow(winId).close();
         delete windows[winId];
     }
 });
@@ -106,8 +105,8 @@ ipcMain.on('open_browser', async (event, url) => {
     await shell.openExternal(url);
 });
 
-ipcMain.on('open_media_selector', (event, profile, row, col, winId) => {
-    openModal(windows[winId], 500, 600, false, 'media_selector.html', async (modal) => {
+ipcMain.on('open_media_selector', (event, profile, row, col, parent, callback) => {
+    openModal(parent, 500, 600, false, 'media_selector.html', async (modal) => {
         let button = await DB.getButton(profile, row, col);
 
         if (button == null) {
@@ -116,11 +115,10 @@ ipcMain.on('open_media_selector', (event, profile, row, col, winId) => {
                 col: col,
                 profile_id: profile
             };
-
-            modal.webContents.send('button', button, true);
-        } else {
-            modal.webContents.send('button', button, false);
         }
+
+        modal.webContents.send('button', button);
+        if (callback != null) modal.webContents.send('callback', callback);
     });
 });
 
@@ -133,7 +131,7 @@ ipcMain.handle('open_file_media_selector', async (event) => {
 });
 
 ipcMain.on('open_button_settings', (event, profile, row, col) => {
-    openModal(mainWindow, 500, 600, false, 'button_settings.html', async (modal) => {
+    openModal(-1, 500, 600, false, 'button_settings.html', async (modal) => {
         let button = await DB.getButton(profile, row, col);
 
         if (button == null) {
@@ -142,16 +140,14 @@ ipcMain.on('open_button_settings', (event, profile, row, col) => {
                 col: col,
                 profile_id: profile
             };
-
-            modal.webContents.send('button', button, true);
-        } else {
-            modal.webContents.send('button', button, false);
         }
+
+        modal.webContents.send('button', button);
     });
 });
 
 ipcMain.on('open_play_now_window', (event) => {
-    openModal(mainWindow, 500, 600, false, 'media_selector.html');
+    openModal(-1, 500, 600, false, 'media_selector.html');
 });
 
 
@@ -239,20 +235,18 @@ ipcMain.handle('get_button', (event, profile, row, col) => {
     return DB.getButton(profile, row, col);
 });
 
-ipcMain.on('set_button', (event, profile, button) => {
-    DB.addButton(profile, button).then((button) => {
-        mainWindow.webContents.send('button_update', button);
-    }).catch((e) => {
-        console.log(e);
-    });
-});
+ipcMain.on('set_button', async (event, profile, button, winId) => {
+    const btn = await setButton(profile, button);
+    if (btn != null) {
+        if (winId != null) {
+            if (winId !== -1) {
+                const win = getWindow(winId);
+                if (win != null) win.webContents.send('button_update', btn);
+            }
+        }
 
-ipcMain.on('update_button', (event, profile, button) => {
-    DB.updateButton(profile, button).then((button) => {
-        mainWindow.webContents.send('button_update', button);
-    }).catch((e) => {
-        console.log(e);
-    });
+        mainWindow.webContents.send('button_update', btn);
+    }
 });
 
 ipcMain.on('swap_buttons', (event, profile, row1, col1, row2, col2) => {
@@ -282,6 +276,14 @@ ipcMain.on('swap_buttons', (event, profile, row1, col1, row2, col2) => {
     });
 });
 
+ipcMain.on('media_selector_button', async (event, profile, button, parent, callback) => {
+    if (callback != null) {
+        if (callback === 'set_button') button = await setButton(profile, button);
+    }
+
+    getWindow(parent).webContents.send('button_update', button);
+});
+
 
 // Misc
 ipcMain.handle('search', (event, query) => {
@@ -295,7 +297,7 @@ ipcMain.handle('search', (event, query) => {
                 return {
                     title: video.title,
                     uri: video.url,
-                    duration: video.durationInSec,
+                    duration: video.durationInSec * 1000,
                     thumbnail: video.thumbnails[0].url
                 }
             }));
@@ -485,7 +487,7 @@ async function initConfigs() {
 
 function openModal(parent, width, height, resizable, html, onFinish, onShow) {
     const modal = new BrowserWindow({
-        parent: parent,
+        parent: getWindow(parent),
         modal: true,
         icon: 'icon.png',
         width: width,
@@ -506,6 +508,8 @@ function openModal(parent, width, height, resizable, html, onFinish, onShow) {
 
     modal.webContents.on('did-finish-load', () => {
         modal.webContents.send('ready', winId, true, resizable);
+        if (parent != null) modal.webContents.send('parent', parent);
+
         if (onFinish) onFinish(modal);
     });
 
@@ -514,7 +518,22 @@ function openModal(parent, width, height, resizable, html, onFinish, onShow) {
         if (onShow) onShow(modal);
     });
 
-    return modal;
+    return winId;
+}
+
+function getWindow(id) {
+    if (id === -1) return mainWindow;
+    else return windows[id];
+}
+
+function getWindowId(win) {
+    if (win === mainWindow) return -1;
+
+    for (const [id, window] of Object.entries(windows)) {
+        if (window === win) return id;
+    }
+
+    return null;
 }
 
 function generateWindowId() {
@@ -523,6 +542,17 @@ function generateWindowId() {
     }
 
     throw new Error('Too many windows');
+}
+
+async function setButton(profile, button) {
+    try {
+        const btn = await DB.getButton(profile, button.row, button.col);
+
+        if (btn != null) return await DB.updateButton(profile, button);
+        else return await DB.addButton(profile, button);
+    } catch (e) {
+        console.log(e);
+    }
 }
 
 function isYouTubeUrl(url) {

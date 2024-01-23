@@ -107,7 +107,7 @@ repeatBtn.click(() => {
 
 searchBtn.click(() => {
     //TODO Refactor
-    window.electronAPI.openMediaSelector(null, null, winId);
+    window.electronAPI.openMediaSelector(null, null, null, winId);
 });
 
 playlistBtn.click(() => {
@@ -215,18 +215,18 @@ function fillButton(button) {
 
     btnImage.css('background-image', button.thumbnail ? `url(${button.thumbnail})` : 'url("images/track.png")');
 
-    btnElement.css('background-color', button.background_color ? button.background_color : 'var(--def-button)');
-    btnElement.css('border-color', button.border_color ? button.border_color : 'transparent');
-    btnText.css('color', button.text_color ? button.text_color : 'var(--def-text)');
+    btnElement.css('background-color', button.bg_color ? button.bg_color : 'var(--def-button)');
+    btnElement.css('border-color', button.brd_color ? button.brd_color : 'transparent');
+    btnText.css('color', button.txt_color ? button.txt_color : 'var(--def-text)');
 
     btnElement.hover(() => {
-        btnElement.css('background-color', button.background_hover_color ? button.background_hover_color : 'var(--def-button-hover)');
-        btnElement.css('color', button.text_hover_color ? button.text_hover_color : 'var(--def-text-hover)');
-        btnElement.css('border-color', button.border_hover_color ? button.border_hover_color : 'transparent');
+        btnElement.css('background-color', button.bg_h_color ? button.bg_h_color : 'var(--def-button-hover)');
+        btnElement.css('color', button.txt_h_color ? button.txt_h_color : 'var(--def-text-hover)');
+        btnElement.css('border-color', button.brd_h_color ? button.brd_h_color : 'transparent');
     }, () => {
-        btnElement.css('background-color', button.background_color ? button.background_color : 'var(--def-button)');
-        btnElement.css('border-color', button.border_color ? button.border_color : 'transparent');
-        btnText.css('color', button.text_color ? button.text_color : 'var(--def-text)');
+        btnElement.css('background-color', button.bg_color ? button.bg_color : 'var(--def-button)');
+        btnElement.css('border-color', button.brd_color ? button.brd_color : 'transparent');
+        btnText.css('color', button.txt_color ? button.txt_color : 'var(--def-text)');
     });
 }
 
@@ -364,7 +364,7 @@ function sbRightClick(e) {
 /* CTX MENU CALLBACKS */
 
 function ctxChooseFile(row, col) {
-    window.electronAPI.openMediaSelector(profile.id, row, col, winId);
+    window.electronAPI.openMediaSelector(profile.id, row, col, winId, 'set_button');
 }
 
 function ctxSettings(row, col) {

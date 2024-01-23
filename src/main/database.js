@@ -88,7 +88,22 @@ const Database = class {
             },
             thumbnail: {
                 type: DataTypes.STRING
-            }
+            },
+            start_time: {
+                type: DataTypes.BIGINT
+            },
+            start_time_unit: {
+                type: DataTypes.STRING
+            },
+            end_time_type: {
+                type: DataTypes.STRING
+            },
+            end_time: {
+                type: DataTypes.BIGINT
+            },
+            end_time_unit: {
+                type: DataTypes.STRING
+            },
         }, {
             indexes: [
                 {

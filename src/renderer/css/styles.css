@@ -176,6 +176,9 @@
     --nav-height: 22px;
     --window-margins: 8px;
     --nav-margin: 10px;
+
+    --def-button: var(--background-primary);
+    --def-button-hover: var(--background-primary-hover);
 }
 
 * {

@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     /* === FROM MAIN PROCESS === */
     // All windows
     handleReady: (callback) => ipcRenderer.on('ready', callback),
+    handleParent: (callback) => ipcRenderer.on('parent', callback),
 
     // Main window
     handleButtonUpdate: (callback) => ipcRenderer.on('button_update', callback),
@@ -16,6 +17,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Buttons windows
     handleButton: (callback) => ipcRenderer.on('button', callback),
 
+    // Media selector windows
+    handleCallback: (callback) => ipcRenderer.on('callback', callback),
+
     /* === TO MAIN PROCESS === */
     // Navbar
     minimize: (winId) => ipcRenderer.send('minimize', winId),
@@ -24,7 +28,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // Windows
     openBrowser: (url) => ipcRenderer.send('open_browser', url),
-    openMediaSelector: (profile, row, col, winId) => ipcRenderer.send('open_media_selector', profile, row, col, winId),
+    openMediaSelector: (profile, row, col, winId, callback) => ipcRenderer.send('open_media_selector', profile, row, col, winId, callback),
     openFileMediaSelector: () => ipcRenderer.invoke('open_file_media_selector'),
     openButtonSettings: (profile, row, col) => ipcRenderer.send('open_button_settings', profile, row, col),
     openPlayNowWindow: () => ipcRenderer.send('open_play_now_window'),
@@ -45,10 +49,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Buttons
     getButtons: (profile) => ipcRenderer.invoke('get_buttons', profile),
     getButton: (profile, row, col) => ipcRenderer.invoke('get_button', profile, row, col),
-    setButton: (profile, button) => ipcRenderer.send('set_button', profile, button),
-    updateButton: (profile, button) => ipcRenderer.send('update_button', profile, button),
+    setButton: (profile, button, winId) => ipcRenderer.send('set_button', profile, button, winId),
     swapButtons: (profile, row1, col1, row2, col2) => ipcRenderer.invoke('swap_buttons', profile, row1, col1, row2, col2),
     deleteButton: (profile, row, col) => ipcRenderer.send('delete_button', profile, row, col),
+    mediaSelectorButton: (profile, button, parent, callback) => ipcRenderer.send('media_selector_button', profile, button, parent, callback),
     refreshUrl: (profile, row, col) => ipcRenderer.send('refresh_url', profile, row, col),
 
     // Misc
