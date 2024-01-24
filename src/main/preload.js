@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setVolume: (volume) => ipcRenderer.send('set_volume', volume),
     setMediaOutput: (device) => ipcRenderer.send('set_media_output', device),
     setActiveProfile: (profile) => ipcRenderer.invoke('set_active_profile', profile),
+    setLoop: (loop) => ipcRenderer.send('set_loop', loop),
 
     // Profiles
     getProfiles: () => ipcRenderer.invoke('get_profiles'),

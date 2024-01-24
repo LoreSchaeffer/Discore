@@ -191,7 +191,7 @@
     line-height: 0;
 }
 
-.control-btn:hover  .material-symbols-rounded {
+.control-btn:hover .material-symbols-rounded {
     color: var(--text-primary-hover);
 }
 
@@ -206,6 +206,22 @@
 
 .control-btn.off:hover .material-symbols-rounded {
     color: var(--text-primary-hover);
+}
+
+.control-btn.disabled {
+    cursor: default;
+}
+
+.control-btn.disabled .material-symbols-rounded {
+    color: var(--text-disabled);
+}
+
+#repeat .material-symbols-rounded {
+    color: var(--text-primary-hover);
+}
+
+#repeat.off .material-symbols-rounded {
+    color: var(--text-secondary);
 }
 
 #playPause .material-symbols-rounded {

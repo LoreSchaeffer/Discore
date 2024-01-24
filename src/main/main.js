@@ -162,6 +162,7 @@ ipcMain.handle('get_soundboard_settings', () => {
     settings.volume = CONFIG.config.volume;
     settings.output_device = CONFIG.config.output_device;
     settings.active_profile = CONFIG.config.active_profile;
+    settings.loop = CONFIG.config.loop;
 
     return settings;
 });
@@ -187,6 +188,11 @@ ipcMain.handle('set_active_profile', (event, profile) => {
     CONFIG.save();
 
     return DB.getProfile(profile);
+});
+
+ipcMain.on('set_loop', (event, loop) => {
+    CONFIG.config.loop = loop;
+    CONFIG.save();
 });
 
 

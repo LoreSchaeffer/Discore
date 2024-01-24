@@ -42,9 +42,25 @@ $(document).ready(async () => {
     player.addEventListener('resume', onResume);
     player.addEventListener('timeupdate', onTimeUpdate);
     player.addEventListener('ended', onEnded);
+    player.addEventListener('queued', onQueued);
 
     sbSettings = await window.electronAPI.getSoundboardSettings();
     player.setVolume(sbSettings.volume);
+
+    switch (sbSettings.loop) {
+        case "none":
+            repeatBtn.find('span').text('repeat');
+            repeatBtn.addClass('off');
+            break;
+        case "all":
+            repeatBtn.find('span').text('repeat');
+            repeatBtn.removeClass('off');
+            break;
+        case "one":
+            repeatBtn.find('span').text('repeat_one');
+            repeatBtn.removeClass('off');
+            break;
+    }
 
     window.electronAPI.getProfiles().then((profiles) => {
         profile = profiles.find((p) => p.id === sbSettings.active_profile);
@@ -86,25 +102,48 @@ $(document).ready(async () => {
 /* LISTENERS */
 
 stopBtn.click(() => {
-    //TODO Now buttons are not disabled
+    if (stopBtn.hasClass('disabled')) return;
     player.stop();
 });
 
 prevBtn.click(() => {
-    //TODO
+    if (prevBtn.hasClass('disabled')) return;
+    player.previous();
 });
 
 playPauseBtn.click(() => {
-    //TODO Now buttons are not disabled
+    if (playPauseBtn.hasClass('disabled')) return;
     player.playPause();
 });
 
 nextBtn.click(() => {
-    //TODO
+    if (nextBtn.hasClass('disabled')) return;
+    player.next();
 });
 
 repeatBtn.click(() => {
-    //TODO
+    if (repeatBtn.hasClass('disabled')) return;
+
+    switch (sbSettings.loop) {
+        case "none":
+            repeatBtn.find('span').text('repeat');
+            repeatBtn.removeClass('off');
+            sbSettings.loop = "all";
+            break;
+        case "all":
+            repeatBtn.find('span').text('repeat_one');
+            repeatBtn.removeClass('off');
+            sbSettings.loop = "one";
+            break;
+        case "one":
+            repeatBtn.find('span').text('repeat');
+            repeatBtn.addClass('off');
+            sbSettings.loop = "none";
+            break;
+    }
+
+    window.electronAPI.setLoop(sbSettings.loop);
+    player.repeat(sbSettings.loop);
 });
 
 searchBtn.click(() => {
@@ -131,11 +170,9 @@ settingsBtn.click(() => {
 window.electronAPI.handleButtonUpdate((event, button) => fillButton(button));
 
 window.electronAPI.handlePlayNow(async (event, track) => {
-    if (track.uri.startsWith('https')) {
-        if (track.url == null) return;
-    }
-
-    player.play(track, null, track.duration * 1000);
+    //TODO
+    if (track == null) return;
+    player.playNow(track);
 });
 
 window.electronAPI.handleMediaPlayPause(() => player.playPause());
@@ -263,62 +300,25 @@ async function sbLeftClick() {
     const track = await window.electronAPI.getTrack(profile.id, parseInt($(this).attr('data-row')), parseInt($(this).attr('data-col')));
     if (track == null) return;
     player.playNow(track);
-
-    //TODO
-
-    // const btn = $(this);
-    // const row = parseInt(btn.attr('data-row'));
-    // const col = parseInt(btn.attr('data-col'));
-    //
-    // if (isDragging) return;
-    //
-    // const button = getButton(row, col);
-    // if (button == null) return;
-    //
-    // const track = button.track;
-    //
-    // if (track.uri.startsWith('https')) {
-    //     if (track.url == null) {
-    //         button.track.url = await window.electronAPI.getNewUrl(row, col);
-    //         if (button.track.url == null) return;
-    //     }
-    // }
-    //
-    // let startTime = button.start_time;
-    // if (startTime) {
-    //     if (button.start_time_unit === 's') startTime *= 1000;
-    //     else if (button.start_time === 'm') startTime *= 60000;
-    // }
-    //
-    // let endTime = button.end_time;
-    // if (endTime) {
-    //     if (button.end_time_unit === 's') endTime *= 1000;
-    //     else if (button.end_time === 'm') endTime *= 60000;
-    //
-    //     if (button.end_type === 'after') endTime = startTime + endTime;
-    // }
-    //
-    // player.play(button.track, startTime, endTime).catch(async (e) => {
-    //     if (button.track.uri.startsWith('https')) {
-    //         const newUrl = await window.electronAPI.getNewUrl(row, col);
-    //         if (newUrl) {
-    //             button.track.url = newUrl;
-    //             player.play(button.track).catch((e) => {
-    //                 console.log('Failed to get a new url');
-    //             });
-    //         }
-    //     }
-    // });
 }
 
 function sbRightClick(e) {
-    e.stopImmediatePropagation();
-
     const btn = $(this);
     const row = parseInt(btn.attr('data-row'));
     const col = parseInt(btn.attr('data-col'));
 
     const items = [
+        {
+            text: 'Play now',
+            callback: () => sbLeftClick.call(btn)
+        },
+        {
+            text: 'Add to queue',
+            callback: () => ctxAddToQueue(row, col)
+        },
+        {
+            classes: ['spacer']
+        },
         {
             text: 'Choose File',
             callback: () => ctxChooseFile(row, col)
@@ -362,9 +362,15 @@ function sbRightClick(e) {
     ];
 
     showContextMenu(items, e.pageX, e.pageY);
+    e.stopImmediatePropagation();
 }
 
 /* CTX MENU CALLBACKS */
+async function ctxAddToQueue(row, col) {
+    const track = await window.electronAPI.getTrack(profile.id, row, col);
+    if (track == null) return;
+    player.addToQueue(track);
+}
 
 function ctxChooseFile(row, col) {
     window.electronAPI.openMediaSelector(profile.id, row, col, winId, 'set_button');
@@ -471,6 +477,9 @@ function onPlay(track, trackDuration) {
 
     trackInfo.css('display', 'flex');
 
+    stopBtn.removeClass('disabled');
+    playPauseBtn.removeClass('disabled');
+
     setPauseButton();
 }
 
@@ -509,8 +518,16 @@ function onTimeUpdate(time) {
     }
 }
 
-function onEnded(playlist) {
-    if (!playlist) onStop();
+function onEnded(currentTrack, queue) {
+    if (queue.length === 0) onStop();
+}
+
+function onQueued(queue) {
+    if (queue.length !== 0) {
+        prevBtn.removeClass('disabled');
+        playPauseBtn.removeClass('disabled');
+        nextBtn.removeClass('disabled');
+    }
 }
 
 /* PLAYER CONTROLS */
@@ -521,19 +538,6 @@ function setPlayButton() {
 
 function setPauseButton() {
     playPauseBtn.find('.material-symbols-rounded').text('pause_circle');
-}
-
-function enableRepeatButton(one) {
-    repeatBtn.removeClass('off');
-
-    const symbol = repeatBtn.find('.material-symbols-rounded');
-    if (one) symbol.text('repeat_one');
-    else symbol.text('repeat');
-}
-
-function disableRepeatButton() {
-    repeatBtn.addClass('off');
-    repeatBtn.find('.material-symbols-rounded').text('repeat');
 }
 
 /* SWAP BUTTON */

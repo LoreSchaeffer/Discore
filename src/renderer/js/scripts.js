@@ -244,11 +244,12 @@ function showContextMenu(items, posX, posY) {
                 submenus.push([ctxItem, submenu]);
             }
 
-            ctxItem.click(() => {
+            ctxItem.click(async () => {
                 if (ctxItem.hasClass('disabled')) return;
+                if (ctxItem.hasClass('spacer')) return;
                 if (ctxItem.hasClass('ctx-subitem')) return;
                 if (item.callback) {
-                    if (item.callback(ctxItem)) return;
+                    if (await item.callback(ctxItem)) return;
                 }
 
                 ctxMenu.remove();

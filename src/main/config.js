@@ -51,7 +51,8 @@ const DEF_CONFIG = {
     height: 768,
     volume: 50,
     output_device: 'default',
-    active_profile: ''
+    active_profile: '',
+    loop: 'none'
 };
 
 module.exports = Config;

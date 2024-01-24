@@ -10,32 +10,31 @@ const Player = class {
         this.isSeeking = false;
         this.startTime = 0;
         this.endTime = 0;
-        this.loop = 0; // 0: none, 1: loop all, 2: loop one
+        this.repeat = 'none';
 
         this.audio.addEventListener('abort', () => {
             console.log('abort');
         });
 
         this.audio.addEventListener('ended', () => {
+            this.dispatchEvent('ended', this.currentTrack, this.queue);
+
             this.isPlaying = false;
 
-            this.audio.currentTime = 0;
-            this.currentTrack = null;
-            this.startTime = 0;
-            this.endTime = 0;
-
             if (this.queue.length !== 0) {
-                if (this.loop === 2) {
+                this._clearTrack();
+
+                if (this.repeat === 'one') {
                     this.currentTrack = this.queue[this.index];
                     this._play();
-                } else if (this.loop === 0 && this.index === this.queue.length - 1) {
-                    return;
+                } else if (this.repeat === 'none' && this.index === this.queue.length - 1) {
                 } else {
                     this.next();
                 }
+            } else {
+                if (this.repeat === 'all' || this.repeat === 'one') this._play();
+                else this._clearTrack();
             }
-
-            this.dispatchEvent('ended', this.queue.length !== 0);
         });
 
         this.audio.addEventListener('error', () => {
@@ -43,7 +42,6 @@ const Player = class {
         });
 
         this.audio.addEventListener('pause', () => {
-            this.isPlaying = false;
             this.isPaused = true;
             this.dispatchEvent('pause');
         });
@@ -74,6 +72,7 @@ const Player = class {
 
     addToQueue(track) {
         this.queue.push(track);
+        this.dispatchEvent('queued', this.queue);
     }
 
     clearQueue() {
@@ -83,7 +82,7 @@ const Player = class {
 
     next() {
         this.index++;
-        if (this.loop === 1 && this.index >= this.queue.length) this.index = 0;
+        if (this.repeat === 1 && this.index >= this.queue.length) this.index = 0;
 
         this.currentTrack = this.queue[this.index];
         this._play();
@@ -97,8 +96,9 @@ const Player = class {
         this._play();
     }
 
-    loop(mode) {
-        this.loop = mode;
+    repeat(mode) {
+        this.repeat = mode;
+        console.log(this.repeat);
     }
 
     play() {
@@ -121,19 +121,19 @@ const Player = class {
         if (this.currentTrack == null) return;
 
         this.audio.pause();
-        this.audio.currentTime = 0;
-        this.startTime = 0;
-        this.endTime = 0;
-
+        this._clearTrack();
         this.isPlaying = false;
-        this.currentTrack = null;
 
         this.dispatchEvent('stop');
     }
 
     playPause() {
-        if (this.isPlaying) this.pause();
-        else this.resume();
+        if (this.isPlaying) {
+            if (this.isPaused) this.resume();
+            else this.pause();
+        } else {
+            this.play();
+        }
     }
 
     pause() {
@@ -165,7 +165,7 @@ const Player = class {
 
             if (this.currentTrack.end_time_type === 'after') {
                 endTime = new Time(this.currentTrack.end_time, this.currentTrack.end_time_unit);
-                endTime.sum(new Time(this.currentTrack.start_time, this.currentTrack.start_time_unit));
+                if (this.currentTrack.startTime && this.currentTrack.startTime !== 0) endTime.sum(new Time(this.currentTrack.start_time, this.currentTrack.start_time_unit));
             } else if (this.currentTrack.end_time_type === 'at') {
                 endTime = new Time(this.currentTrack.end_time, this.currentTrack.end_time_unit);
             }
@@ -200,6 +200,13 @@ const Player = class {
         }
 
         this.dispatchEvent('timeupdate', currentTime - this.startTime);
+    }
+
+    _clearTrack() {
+        this.audio.currentTime = 0;
+        this.currentTrack = null;
+        this.startTime = 0;
+        this.endTime = 0;
     }
 
 
