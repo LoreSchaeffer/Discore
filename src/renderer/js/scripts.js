@@ -458,4 +458,14 @@ class Time {
             else if (this.unit === 'm') return this.time > time;
         }
     }
+
+    sum(time) {
+        const unit = time.unit;
+
+        this.toMilliseconds();
+        time.toMilliseconds();
+        this.time += time.time;
+
+        this.convertUnit(unit);
+    }
 }

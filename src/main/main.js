@@ -240,8 +240,8 @@ ipcMain.handle('get_button', (event, profile, row, col) => {
 });
 
 ipcMain.handle('get_track', (event, profile, row, col) => {
-    try {
-        return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+        try {
             const button = await DB.getButton(profile, row, col);
             if (button == null) return reject();
 
@@ -259,16 +259,18 @@ ipcMain.handle('get_track', (event, profile, row, col) => {
                 duration: button.duration,
                 thumbnail: button.thumbnail,
                 start_time: button.start_time,
+                start_time_unit: button.start_time_unit,
                 end_time_type: button.end_time_type,
                 end_time: button.end_time,
                 end_time_unit: button.end_time_unit
             };
 
             resolve(track);
-        });
-    } catch (e) {
-        return null;
-    }
+        } catch (e) {
+            console.log(e);
+        }
+    });
+
 });
 
 ipcMain.on('set_button', async (event, profile, button, winId) => {

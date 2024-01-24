@@ -36,10 +36,19 @@ window.electronAPI.handleButton((event, btn) => {
     if (button.title) title.val(button.title);
 
     if (button.start_time) startTime.val(button.start_time);
+    else startTime.val(0);
+
     if (button.start_time_unit) startTimeUnit.val(button.start_time_unit);
+    else startTimeUnit.val('s');
+
     if (button.end_time_type) endTimeType.val(button.end_time_type);
+    else endTimeType.val('after');
+
     if (button.end_time) endTime.val(button.end_time);
+    else endTime.val(0);
+
     if (button.end_time_unit) endTimeUnit.val(button.end_time_unit);
+    else endTimeUnit.val('s');
 
     if (button.bg_color) {
         const input = backgroundColor.find('input');
@@ -180,11 +189,10 @@ endTimeType.change(() => {
 
             endTime.val(eTime.time);
             endTimeUnit.val(eTime.unit);
-
-            button.end_time = eTime.time;
-            button.end_time_unit = eTime.unit;
         }
 
+        button.end_time = eTime.time;
+        button.end_time_unit = eTime.unit;
         button.end_time_type = 'at';
     } else if (endTimeType.val() === 'after') {
         const eTime = new Time(parseInt(endTime.val()), endTimeUnit.val());
@@ -196,11 +204,10 @@ endTimeType.change(() => {
 
             endTime.val(eTime.time);
             endTimeUnit.val(eTime.unit);
-
-            button.end_time = eTime.time;
-            button.end_time_unit = eTime.unit;
         }
 
+        button.end_time = eTime.time;
+        button.end_time_unit = eTime.unit;
         button.end_time_type = 'after';
     }
 });
@@ -224,6 +231,9 @@ endTime.change(() => {
                 button.end_time = eTime.time;
                 button.end_time_unit = eTime.unit;
             }
+
+            button.end_time = eTime.time;
+            button.end_time_unit = eTime.unit;
         } else if (endTimeType.val() === 'after') {
             const eTime = new Time(parseInt(endTime.val()), endTimeUnit.val());
             const sTime = new Time(parseInt(startTime.val()), startTimeUnit.val());
@@ -234,12 +244,14 @@ endTime.change(() => {
 
                 endTime.val(eTime.time);
                 endTimeUnit.val(eTime.unit);
-
-                button.end_time = eTime.time;
-                button.end_time_unit = eTime.unit;
             }
+
+            button.end_time = eTime.time;
+            button.end_time_unit = eTime.unit;
         }
     }
+
+    if (!button.end_time_type) button.end_time_type = endTimeType.val();
 });
 
 endTimeUnit.change(() => {
@@ -251,6 +263,8 @@ endTimeUnit.change(() => {
     button.end_time = eTime.time;
     button.end_time_unit = eTime.unit;
 });
+
+/* STYLE */
 
 backgroundColor.change(() => {
     button.bg_color = backgroundColor.find('input').val();
@@ -361,6 +375,8 @@ borderHoverColorReset.click(() => {
         $('#preview').css('border-color', 'transparent');
     });
 });
+
+/* END OF STYLE */
 
 discardBtn.click(() => {
     window.electronAPI.close(winId);

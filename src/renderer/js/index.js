@@ -41,6 +41,7 @@ $(document).ready(async () => {
     player.addEventListener('pause', onPause);
     player.addEventListener('resume', onResume);
     player.addEventListener('timeupdate', onTimeUpdate);
+    player.addEventListener('ended', onEnded);
 
     sbSettings = await window.electronAPI.getSoundboardSettings();
     player.setVolume(sbSettings.volume);
@@ -454,14 +455,14 @@ function ctxClear(row, col) {
 
 /* PLAYER EVENTS */
 
-function onPlay(track) {
-    setProgressDuration(progressBar, 0, track.duration, 0);
+function onPlay(track, trackDuration) {
+    setProgressDuration(progressBar, 0, trackDuration, 0);
     enableProgress(progressBar);
 
     currentTime.text(formatDuration(0));
     currentTime.show();
 
-    duration.text(formatDuration(track.duration / 1000));
+    duration.text(formatDuration(trackDuration / 1000));
     duration.show();
 
     trackName.text(track.title);
@@ -504,8 +505,12 @@ function onResume() {
 function onTimeUpdate(time) {
     if (!progressRangeMD) {
         updateProgressValue(progressBar, time);
-        currentTime.text(formatDuration(time));
+        currentTime.text(formatDuration(Math.round(time / 1000)));
     }
+}
+
+function onEnded(playlist) {
+    if (!playlist) onStop();
 }
 
 /* PLAYER CONTROLS */
