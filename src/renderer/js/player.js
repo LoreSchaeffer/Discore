@@ -5,6 +5,7 @@ const Player = class {
         this.queue = [];
         this.index = 0;
         this.currentTrack = null;
+        this.playingQueue = false;
         this.isPlaying = false;
         this.isPaused = false;
         this.isSeeking = false;
@@ -42,8 +43,10 @@ const Player = class {
         });
 
         this.audio.addEventListener('pause', () => {
-            this.isPaused = true;
-            this.dispatchEvent('pause');
+            if (this.isPlaying) {
+                this.isPaused = true;
+                this.dispatchEvent('pause');
+            }
         });
 
         this.audio.addEventListener('playing', () => {
@@ -78,27 +81,33 @@ const Player = class {
     clearQueue() {
         this.queue = [];
         this.index = 0;
+        this.playingQueue = false;
     }
 
     next() {
+        if (this.queue.length === 0) return;
+
         this.index++;
         if (this.repeat === 1 && this.index >= this.queue.length) this.index = 0;
 
+        this.playingQueue = true;
         this.currentTrack = this.queue[this.index];
         this._play();
     }
 
     previous() {
+        if (this.queue.length === 0) return;
+
         this.index--;
         if (this.index < 0) this.index = this.queue.length - 1;
 
+        this.playingQueue = true;
         this.currentTrack = this.queue[this.index];
         this._play();
     }
 
     repeat(mode) {
         this.repeat = mode;
-        console.log(this.repeat);
     }
 
     play() {
@@ -107,12 +116,14 @@ const Player = class {
         if (this.queue.length === 0) return;
 
         this.currentTrack = this.queue[this.index];
+        this.playingQueue = true;
         this._play();
     }
 
     playNow(track) {
         if (this.isPlaying) this.stop();
 
+        this.playingQueue = false;
         this.currentTrack = track;
         this._play();
     }
@@ -120,11 +131,12 @@ const Player = class {
     stop() {
         if (this.currentTrack == null) return;
 
+        this.isPlaying = false;
+        this.isPaused = false;
         this.audio.pause();
         this._clearTrack();
-        this.isPlaying = false;
 
-        this.dispatchEvent('stop');
+        this.dispatchEvent('stop', this.queue);
     }
 
     playPause() {

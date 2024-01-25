@@ -276,7 +276,6 @@ ipcMain.handle('get_track', (event, profile, row, col) => {
             console.log(e);
         }
     });
-
 });
 
 ipcMain.on('set_button', async (event, profile, button, winId) => {
@@ -293,30 +292,41 @@ ipcMain.on('set_button', async (event, profile, button, winId) => {
     }
 });
 
-ipcMain.on('swap_buttons', (event, profile, row1, col1, row2, col2) => {
+ipcMain.handle('swap_buttons', (event, profile, row1, col1, row2, col2) => {
     return new Promise(async (resolve, reject) => {
-        try {
-            const buttons = await DB.getButtons(profile);
+        let button1 = await DB.getButton(profile, row1, col1);
+        let button2 = await DB.getButton(profile, row2, col2);
 
-            const button1 = buttons.find((button) => button.row === row1 && button.col === col1);
-            const button2 = buttons.find((button) => button.row === row2 && button.col === col2);
+        if (button1 != null) {
+            button1.row = row2;
+            button1.col = col2;
 
-            if (button1 != null) {
-                button1.row = row2;
-                button1.col = col2;
-                await DB.updateButton(profile, button1);
+            if (button2 != null) await DB.deleteButton(profile, row2, col2);
+            DB.moveButton(profile, button1, row1, col1);
+        } else {
+            button1 = {
+                row: row2,
+                col: col2,
+                profile_id: profile,
+                empty: true
             }
-
-            if (button2 != null) {
-                button2.row = row1;
-                button2.col = col1;
-                await DB.updateButton(profile, button2);
-            }
-
-            resolve([button1, button2]);
-        } catch (e) {
-            reject(e);
         }
+
+        if (button2 != null) {
+            button2.row = row1;
+            button2.col = col1;
+
+            DB.addButton(profile, button2);
+        } else {
+            button2 = {
+                row: row1,
+                col: col1,
+                profile_id: profile,
+                empty: true
+            }
+        }
+
+        resolve([button1, button2]);
     });
 });
 
@@ -349,6 +359,16 @@ ipcMain.handle('search', (event, query) => {
     } catch (e) {
         return [];
     }
+});
+
+ipcMain.on('play_now', async (event, track) => {
+    if (isYouTubeUrl(track.uri)) {
+        if (!(await isYouTubeUrlValid(track.url))) {
+            track.url = await getStreamUrl(track.uri);
+        }
+    }
+
+    mainWindow.webContents.send('play_now', track);
 });
 
 

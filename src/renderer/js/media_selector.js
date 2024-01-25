@@ -72,11 +72,11 @@ saveBtn.click(() => {
         button.thumbnail = track.thumbnail;
 
         window.electronAPI.mediaSelectorButton(button.profile_id, button, parentId, callback);
-        window.electronAPI.close(winId);
     } else {
         window.electronAPI.playNow(track);
-        window.electronAPI.close(winId);
     }
+
+    window.electronAPI.close(winId);
 });
 
 function search() {

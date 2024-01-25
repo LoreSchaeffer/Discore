@@ -109,6 +109,9 @@ const Database = class {
                 {
                     unique: true,
                     fields: ['profile_id', 'row', 'col'],
+                },
+                {
+                    fields: ['profile_id', 'row', 'col']
                 }
             ],
             timestamps: false
@@ -245,6 +248,38 @@ const Database = class {
 
             return (await this.Button.findOne({where: {profile_id: profile, row: button.row, col: button.col}}))
                 .get({plain: true});
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async moveButton(profile, button, oldRow, oldCol) {
+        try {
+            const [updated] = await this.Button.update({
+                btn_title: button.btn_title || null,
+                txt_color: button.txt_color || null,
+                txt_h_color: button.txt_h_color || null,
+                bg_color: button.bg_color || null,
+                bg_h_color: button.bg_h_color || null,
+                brd_color: button.brd_color || null,
+                brd_h_color: button.brd_h_color || null,
+                title: button.title || null,
+                uri: button.uri,
+                url: button.url || null,
+                duration: button.duration,
+                thumbnail: button.thumbnail || null,
+                start_time: button.start_time || null,
+                start_time_unit: button.start_time_unit || null,
+                end_time_type: button.end_time_type || null,
+                end_time: button.end_time || null,
+                end_time_unit: button.end_time_unit || null,
+                row: button.row,
+                col: button.col
+            }, {
+                where: {profile_id: profile, row: oldRow, col: oldCol}
+            });
+
+            if (!updated) throw new Error('Button not found');
         } catch (error) {
             console.error(error);
         }

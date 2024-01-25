@@ -28,6 +28,7 @@ let player;
 let progressRangeMD = false;
 let isDragging = false;
 let dragSuccess = null;
+let muted = false;
 
 let copiedButton = null;
 let copiedStyle = null;
@@ -74,6 +75,7 @@ $(document).ready(async () => {
     });
 
     updateProgressValue(volumeSlider, sbSettings.volume);
+    setVolumeIcon(sbSettings.volume);
     player.setOutputDevice(sbSettings.output_device);
 
     setProgressListener(progressBar, 'mousedown', () => {
@@ -86,16 +88,12 @@ $(document).ready(async () => {
     setProgressListener(volumeSlider, 'input', () => {
         const volume = volumeSlider.attr('aria-valuenow');
         player.setVolume(volume);
-        window.electronAPI.setVolume(volume);
 
-        const volumeSymbol = volumeBtn.find('.material-symbols-rounded');
-        if (volume <= 10) {
-            volumeSymbol.text('volume_mute');
-        } else if (volume <= 50) {
-            volumeSymbol.text('volume_down');
-        } else {
-            volumeSymbol.text('volume_up');
-        }
+        if (muted) return;
+
+        window.electronAPI.setVolume(volume);
+        sbSettings.volume = volume;
+        setVolumeIcon(volume);
     });
 });
 
@@ -147,18 +145,23 @@ repeatBtn.click(() => {
 });
 
 searchBtn.click(() => {
-    //TODO Refactor
-    window.electronAPI.openMediaSelector(null, null, null, winId);
+    window.electronAPI.openPlayNowWindow();
 });
 
-playlistBtn.click(() => {
-    //TODO
-});
+playlistBtn.click(showPlaylist);
 
 mediaOutputBtn.click(showAudioOutputMenu);
 
 volumeBtn.click(() => {
-    // TODO volume_off <-> volume
+    if (muted) {
+        muted = false;
+        setVolumeIcon(sbSettings.volume);
+        updateProgressValue(volumeSlider, sbSettings.volume);
+    } else {
+        muted = true;
+        volumeBtn.find('.material-symbols-rounded').text('volume_off');
+        updateProgressValue(volumeSlider, 0);
+    }
 });
 
 settingsBtn.click(() => {
@@ -170,7 +173,6 @@ settingsBtn.click(() => {
 window.electronAPI.handleButtonUpdate((event, button) => fillButton(button));
 
 window.electronAPI.handlePlayNow(async (event, track) => {
-    //TODO
     if (track == null) return;
     player.playNow(track);
 });
@@ -180,11 +182,11 @@ window.electronAPI.handleMediaPlayPause(() => player.playPause());
 window.electronAPI.handleMediaStop(() => player.stop());
 
 window.electronAPI.handleMediaNext(() => {
-    //TODO
+    player.next();
 });
 
 window.electronAPI.handleMediaPrev(() => {
-    //TODO
+    player.previous();
 });
 
 /* SOUNDBOARD GENERATION */
@@ -297,6 +299,8 @@ function setEmptyButton(row, col) {
 /* BUTTON EVENTS */
 
 async function sbLeftClick() {
+    if (isDragging) return;
+
     const track = await window.electronAPI.getTrack(profile.id, parseInt($(this).attr('data-row')), parseInt($(this).attr('data-col')));
     if (track == null) return;
     player.playNow(track);
@@ -483,7 +487,7 @@ function onPlay(track, trackDuration) {
     setPauseButton();
 }
 
-function onStop() {
+function onStop(queue) {
     updateProgressValue(progressBar, 0);
     setProgressDuration(progressBar, 0, 0, 0);
     disableProgress(progressBar);
@@ -501,6 +505,10 @@ function onStop() {
     trackInfo.hide();
 
     setPlayButton();
+    if (queue.length === 0) {
+        playPauseBtn.addClass('disabled');
+        stopBtn.addClass('disabled');
+    }
 }
 
 function onPause() {
@@ -540,43 +548,32 @@ function setPauseButton() {
     playPauseBtn.find('.material-symbols-rounded').text('pause_circle');
 }
 
+function setVolumeIcon(volume) {
+    const volumeSymbol = volumeBtn.find('.material-symbols-rounded');
+    if (volume <= 10) {
+        volumeSymbol.text('volume_mute');
+    } else if (volume <= 50) {
+        volumeSymbol.text('volume_down');
+    } else {
+        volumeSymbol.text('volume_up');
+    }
+}
+
 /* SWAP BUTTON */
 
 function swapButtons(draggable, droppable) {
-    const draggableRow = parseInt(draggable.attr('data-row'));
-    const draggableCol = parseInt(draggable.attr('data-col'));
+    const row1 = parseInt(draggable.attr('data-row'));
+    const col1 = parseInt(draggable.attr('data-col'));
 
-    const droppableRow = parseInt(droppable.attr('data-row'));
-    const droppableCol = parseInt(droppable.attr('data-col'));
+    const row2 = parseInt(droppable.attr('data-row'));
+    const col2 = parseInt(droppable.attr('data-col'));
 
-    window.electronAPI.swapButtons(profile.id, draggableRow, draggableCol, droppableRow, droppableCol).then((buttons) => {
-        //TODO To implement (check if buttons is promise or list)
-        // const index1 = buttons.findIndex((btn) => btn.row === row1 && btn.col === col1);
-        // const index2 = buttons.findIndex((btn) => btn.row === row2 && btn.col === col2);
-        //
-        // if (index1 !== -1) {
-        //     buttons.splice(index1, 1);
-        // }
-        //
-        // if (index2 !== -1) {
-        //     buttons.splice(index2, 1);
-        // }
-        //
-        // if (button1 != null) {
-        //     buttons.push(button1);
-        //     fillButton(button1);
-        // } else {
-        //     resetButton(row2, col2);
-        // }
-        //
-        // if (button2 != null) {
-        //     buttons.push(button2);
-        //     fillButton(button2);
-        // } else {
-        //     resetButton(row1, col1);
-        // }
-        //
-        // isDragging = false;
+    window.electronAPI.swapButtons(profile.id, row1, col1, row2, col2).then(([button1, button2]) => {
+        if (button1.empty) setEmptyButton(button1.row, button1.col);
+        else fillButton(button1);
+
+        if (button2.empty) setEmptyButton(button2.row, button2.col);
+        else fillButton(button2);
     });
 }
 
@@ -643,6 +640,25 @@ function testPlayback(ctxItem) {
     }
 
     return true;
+}
+
+/* PLAYLIST */
+function showPlaylist() {
+    const queue = player.queue;
+
+    const playlist = $(`<div id="playlistMenu"></div>`);
+
+    if (queue.length === 0) {
+        playlist.append('<p id="emptyPlaylist">Playlist is empty</p>');
+    } else {
+        queue.forEach((track) => {
+            playlist.append(`<p>${track.title}</p>`);
+        });
+    }
+
+    $('body').append(playlist);
+    playlist.css('left', `calc(100% - ${playlist.outerWidth() + 8}px)`);
+    playlist.css('top', (playlistBtn.offset().top - playlist.outerHeight() - 8) + 'px');
 }
 
 /* PROFILES */
