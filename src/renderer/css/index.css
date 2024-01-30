@@ -176,6 +176,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: normal;
+    cursor: pointer;
 }
 
 #controlButtons {
@@ -275,6 +276,9 @@
 }
 
 #playlistMenu {
+    min-width: 350px;
+    max-width: 450px;
+    max-height: 70vh;
     position: absolute;
     padding: 4px;
     background-color: var(--background-tertiary);
@@ -282,6 +286,156 @@
     display: flex;
     flex-direction: column;
     z-index: 100;
+}
+
+#playlistHeader {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 4px;
+    cursor: pointer;
+    user-select: none;
+}
+
+#playlistHeader:hover {
+    color: var(--text-primary-hover);
+}
+
+#clearPlaylist {
+    display: flex;
+    align-items: center;
+}
+
+#playlistHeader span {
+    font-size: 14px;
+}
+
+#playlistHeader .material-symbols-rounded {
+    margin-left: 5px;
+}
+
+#playlistContainer {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.playlist-divider {
+    width: 100%;
+    height: 8px;
+    border-bottom: 1px solid var(--background-tertiary-hover);
+    margin-bottom: 4px;
+}
+
+.playlist-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 4px;
+    border-radius: 5px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 100ms ease-in-out;
+}
+
+.playlist-item.active {
+    background-color: var(--background-tertiary-hover);
+}
+
+.playlist-item:hover {
+    background-color: var(--blurple);
+}
+
+.playlist-item-icon {
+    width: 40px;
+    height: 40px;
+    aspect-ratio: 1;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 5px;
+    z-index: 1;
+}
+
+.playlist-item-title-container {
+    height: 40px;
+    flex-grow: 1;
+    overflow: hidden;
+    margin-left: 6px;
+    margin-right: 6px;
+    display: flex;
+    align-items: center;
+}
+
+.playlist-item-title {
+    display: inline-block;
+    white-space: nowrap;
+    font-size: 14px;
+    color: var(--text-primary);
+    margin-bottom: 0;
+    overflow-x: auto;
+}
+
+.playlist-item-title::-webkit-scrollbar {
+    display: none;
+}
+
+.playlist-item:hover .playlist-item-title {
+    color: var(--text-primary-hover);
+}
+
+.playlist-item-remove {
+    font-size: 16px;
+    z-index: 1;
+}
+
+.playlist-item-remove:hover {
+    color: var(--text-primary-hover);
+}
+
+#settingsMenu {
+    width: 250px;
+    max-height: 70vh;
+    position: absolute;
+    padding: 4px 10px;
+    background-color: var(--background-tertiary);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+#settingsMenu .input-row {
+    justify-content: space-between;
+}
+
+#settingsMenu .input-row .col-form-label {
+    white-space: nowrap;
+    margin-right: 4px;
+}
+
+#settingsMenu .form-control-sm {
+    background-color: var(--background-tertiary-alt);
+    max-width: 50px;
+}
+
+#settingsMenu .input-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#settingsMenu .num-input-editor {
+    font-size: 14px;
+    user-select: none;
+    cursor: pointer;
+}
+
+#settingsMenu .num-input-editor:hover {
+    color: var(--text-primary-hover);
 }
 
 @media screen and (max-width: 1225px) {

@@ -18,7 +18,7 @@ const Player = class {
         });
 
         this.audio.addEventListener('ended', () => {
-            this.dispatchEvent('ended', this.currentTrack, this.queue);
+            this.dispatchEvent('ended');
 
             this.isPlaying = false;
 
@@ -36,6 +36,8 @@ const Player = class {
                 if (this.repeat === 'all' || this.repeat === 'one') this._play();
                 else this._clearTrack();
             }
+
+            if (this.isPaused) this.isPaused = false;
         });
 
         this.audio.addEventListener('error', () => {
@@ -78,6 +80,18 @@ const Player = class {
         this.dispatchEvent('queued', this.queue);
     }
 
+    removeFromQueue(index) {
+        if (index >= this.queue.length) return;
+
+        if (this.queue.length < 2) {
+            this.clearQueue();
+        } else {
+            if (index < this.index) this.index--;
+
+            this.queue.splice(index, 1);
+        }
+    }
+
     clearQueue() {
         this.queue = [];
         this.index = 0;
@@ -85,7 +99,7 @@ const Player = class {
     }
 
     next() {
-        if (this.queue.length === 0) return;
+        if (this.queue.length < 2) return;
 
         this.index++;
         if (this.repeat === 1 && this.index >= this.queue.length) this.index = 0;
@@ -96,7 +110,7 @@ const Player = class {
     }
 
     previous() {
-        if (this.queue.length === 0) return;
+        if (this.queue.length < 2) return;
 
         this.index--;
         if (this.index < 0) this.index = this.queue.length - 1;
@@ -106,7 +120,7 @@ const Player = class {
         this._play();
     }
 
-    repeat(mode) {
+    loop(mode) {
         this.repeat = mode;
     }
 
@@ -125,6 +139,16 @@ const Player = class {
 
         this.playingQueue = false;
         this.currentTrack = track;
+        this._play();
+    }
+
+    playNowFromQueue(index) {
+        if (index >= this.queue.length) return;
+
+        if (this.isPlaying) this.stop();
+        this.index = index;
+        this.currentTrack = this.queue[this.index];
+        this.playingQueue = true;
         this._play();
     }
 

@@ -35,7 +35,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // Settings
     getSoundboardSettings: () => ipcRenderer.invoke('get_soundboard_settings'),
-    setSoundboardSize: (width, height) => ipcRenderer.send('set_soundboard_size', width, height),
+    setSoundboardSize: (profile, width, height) => ipcRenderer.send('set_soundboard_size', profile, width, height),
     setVolume: (volume) => ipcRenderer.send('set_volume', volume),
     setMediaOutput: (device) => ipcRenderer.send('set_media_output', device),
     setActiveProfile: (profile) => ipcRenderer.invoke('set_active_profile', profile),

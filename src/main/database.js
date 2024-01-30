@@ -164,6 +164,18 @@ const Database = class {
         }
     }
 
+    async resizeProfile(id, rows, cols) {
+        try {
+            const profile = await this.Profile.findByPk(id);
+            profile.rows = rows;
+            profile.columns = cols;
+            await profile.save();
+            return profile.get({plain: true});
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
     async deleteProfile(id) {
         try {
             const profile = await this.Profile.findByPk(id);

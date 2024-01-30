@@ -14,6 +14,7 @@ const DB = new Database(CONFIG_DIR);
 const windows = {};
 let mainWindow;
 
+//TODO Allow to preview tracks from media selector
 //TODO Find metadata for local files
 //TODO Use online metadata service
 
@@ -167,10 +168,8 @@ ipcMain.handle('get_soundboard_settings', () => {
     return settings;
 });
 
-ipcMain.on('set_soundboard_size', (event, width, height) => {
-    CONFIG.config.width = width;
-    CONFIG.config.height = height;
-    CONFIG.save();
+ipcMain.on('set_soundboard_size', (event, profile, width, height) => {
+    DB.resizeProfile(profile, width, height);
 });
 
 ipcMain.on('set_volume', (event, volume) => {
@@ -238,7 +237,11 @@ ipcMain.handle('delete_profile', (event, id) => {
 
 // Buttons
 ipcMain.handle('get_buttons', (event, profile) => {
-    return DB.getButtons(profile);
+    return new Promise(async (resolve, reject) => {
+        const buttons = await DB.getButtons(profile);
+        initButtons(profile, buttons);
+        resolve(buttons);
+    });
 });
 
 ipcMain.handle('get_button', (event, profile, row, col) => {
@@ -488,6 +491,17 @@ async function setButton(profile, button) {
         else return await DB.addButton(profile, button);
     } catch (e) {
         console.log(e);
+    }
+}
+
+async function initButtons(profile, buttons) {
+    for (const button of buttons) {
+        if (isYouTubeUrl(button.uri)) {
+            if (!(await isYouTubeUrlValid(button.url))) {
+                button.url = await getStreamUrl(button.uri);
+                DB.updateButton(profile, button);
+            }
+        }
     }
 }
 

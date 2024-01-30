@@ -33,6 +33,9 @@ let muted = false;
 let copiedButton = null;
 let copiedStyle = null;
 
+let playlist;
+let settings;
+
 /* READY */
 
 $(document).ready(async () => {
@@ -77,6 +80,10 @@ $(document).ready(async () => {
     updateProgressValue(volumeSlider, sbSettings.volume);
     setVolumeIcon(sbSettings.volume);
     player.setOutputDevice(sbSettings.output_device);
+
+    trackSrc.click(() => {
+        window.electronAPI.openBrowser(trackSrc.text());
+    });
 
     setProgressListener(progressBar, 'mousedown', () => {
         progressRangeMD = true;
@@ -141,7 +148,7 @@ repeatBtn.click(() => {
     }
 
     window.electronAPI.setLoop(sbSettings.loop);
-    player.repeat(sbSettings.loop);
+    player.loop(sbSettings.loop);
 });
 
 searchBtn.click(() => {
@@ -164,9 +171,7 @@ volumeBtn.click(() => {
     }
 });
 
-settingsBtn.click(() => {
-    //TODO
-});
+settingsBtn.click(showSettings);
 
 /* IPC LISTENERS */
 
@@ -485,9 +490,11 @@ function onPlay(track, trackDuration) {
     playPauseBtn.removeClass('disabled');
 
     setPauseButton();
+
+    if (playlist != null) showPlaylist();
 }
 
-function onStop(queue) {
+function onStop() {
     updateProgressValue(progressBar, 0);
     setProgressDuration(progressBar, 0, 0, 0);
     disableProgress(progressBar);
@@ -505,18 +512,24 @@ function onStop(queue) {
     trackInfo.hide();
 
     setPlayButton();
-    if (queue.length === 0) {
+    if (player.queue.length === 0) {
         playPauseBtn.addClass('disabled');
         stopBtn.addClass('disabled');
     }
+
+    if (playlist != null) hidePlaylist();
 }
 
 function onPause() {
     setPlayButton();
+
+    if (playlist != null) showPlaylist();
 }
 
 function onResume() {
     setPauseButton();
+
+    if (playlist != null) showPlaylist();
 }
 
 function onTimeUpdate(time) {
@@ -526,8 +539,9 @@ function onTimeUpdate(time) {
     }
 }
 
-function onEnded(currentTrack, queue) {
-    if (queue.length === 0) onStop();
+function onEnded() {
+    if (player.queue.length === 0) onStop();
+    else if (playlist != null) showPlaylist();
 }
 
 function onQueued(queue) {
@@ -643,22 +657,218 @@ function testPlayback(ctxItem) {
 }
 
 /* PLAYLIST */
-function showPlaylist() {
+function showPlaylist(e) {
+    if (playlist != null) playlist.remove();
+    if (settings != null) hideSettings(e);
+    if (contextMenu != null) hideContextMenu(e);
+
     const queue = player.queue;
 
-    const playlist = $(`<div id="playlistMenu"></div>`);
+    playlist = $(`<div id="playlistMenu"></div>`);
 
     if (queue.length === 0) {
         playlist.append('<p id="emptyPlaylist">Playlist is empty</p>');
     } else {
-        queue.forEach((track) => {
-            playlist.append(`<p>${track.title}</p>`);
+        const header = $(`<div id="playlistHeader"></div>`);
+        const clear = $(`<div id="clearPlaylist"><span>Clear</span><span class="material-symbols-rounded playlist-close">close</span></div>`);
+        header.append(clear);
+        playlist.append(header);
+
+
+        const playlistContainer = $('<div id="playlistContainer"></div>');
+        playlist.append(playlistContainer);
+
+        if (!player.playingQueue && player.currentTrack != null) {
+            createPlaylistItem(player.currentTrack, null, playlistContainer);
+            playlist.append('<div class="playlist-divider"></div>');
+        }
+
+        for (let i = 0; i < queue.length; i++) {
+            const item = createPlaylistItem(queue[i], i, playlistContainer);
+
+            item.click(() => {
+                player.playNowFromQueue(i);
+            });
+
+            item.find('.playlist-item-remove').click((e) => {
+                player.removeFromQueue(i);
+                e.stopPropagation();
+                hidePlaylist();
+            });
+        }
+
+        clear.click(() => {
+            if (player.playingQueue) player.stop();
+            player.clearQueue();
         });
     }
 
     $('body').append(playlist);
     playlist.css('left', `calc(100% - ${playlist.outerWidth() + 8}px)`);
     playlist.css('top', (playlistBtn.offset().top - playlist.outerHeight() - 8) + 'px');
+
+    $(document).click(() => hidePlaylist());
+    $(document).contextmenu(() => hidePlaylist());
+
+    if (e != null) e.stopPropagation();
+}
+
+function createPlaylistItem(track, index, container) {
+    const item = $(`<div class="playlist-item" data-index="${index != null ? index : 'none'}"></div>`);
+    const icon = $(`<div class="playlist-item-icon"></div>`);
+    const titleContainer = $(`<div class="playlist-item-title-container"></div>`);
+    const title = $(`<p class="playlist-item-title">${track.title}</p>`);
+    const remove = $(`<span class="material-symbols-rounded playlist-item-remove">delete</span>`);
+
+    item.append(icon);
+    titleContainer.append(title);
+    item.append(titleContainer);
+    item.append(remove);
+    container.append(item);
+
+    if (player.index === index && player.playingQueue && player.isPlaying) item.addClass('active');
+    else if (!player.playingQueue && index === null) item.addClass('active');
+
+    icon.css('background-image', track.thumbnail ? `url(${track.thumbnail})` : 'url("images/track.png")');
+
+    item.hover(() => {
+        const containerWidth = titleContainer.outerWidth();
+        const titleLength = title.text().length;
+
+        const speed = (titleLength / containerWidth) * 10000;
+
+        scrollTitle(title, speed);
+    }, () => {
+        title.stop();
+        title.scrollLeft(0);
+    });
+
+    return item;
+}
+
+function scrollTitle(title, speed) {
+    title.animate({scrollLeft: title.outerWidth()}, speed, 'linear', function () {
+        title.animate({scrollLeft: 0}, speed, 'linear', function () {
+            scrollTitle(title, speed);
+        });
+    });
+}
+
+function hidePlaylist() {
+    if (playlist != null) {
+        playlist.off('click');
+        playlist.off('contextmenu');
+
+        playlist.find('.playlist-item').off('click');
+        playlist.find('.playlist-item').off('hover');
+
+        playlist.find('.playlist-item-remove').off('click');
+
+        playlist.find('#clearPlaylist').off('click');
+
+        playlist.remove();
+        playlist = null;
+    }
+}
+
+/* SETTINGS */
+function showSettings(e) {
+    if (settings != null) settings.remove();
+    if (playlist != null) hidePlaylist(e);
+    if (contextMenu != null) hideContextMenu(e);
+
+    settings = $(`<div id="settingsMenu"></div>`);
+
+    const rowsInputRow = $(`<div class="input-row"></div>`);
+    rowsInputRow.append(`<label for="rows" class="col-form-label">Rows</label>`);
+    const rowsInputContainer = $(`<div class="input-container"></div>`);
+    const inputRows = $(`<input id="rows" type="number" class="form-control form-control-sm" value="${profile.rows}" min="1" step="1"/>`);
+    const rowsDecrease = $(`<span class="material-symbols-rounded num-input-editor">remove</span>`);
+    const rowsIncrease = $(`<span class="material-symbols-rounded num-input-editor">add</span>`);
+
+    rowsInputContainer.append(rowsDecrease);
+    rowsInputContainer.append(inputRows);
+    rowsInputContainer.append(rowsIncrease);
+    rowsInputRow.append(rowsInputContainer);
+    settings.append(rowsInputRow);
+
+    const columnsInputRow = $(`<div class="input-row"></div>`);
+    columnsInputRow.append(`<label for="columns" class="col-form-label">Columns</label>`);
+    const columnsInputContainer = $(`<div class="input-container"></div>`);
+    const inputColumns = $(`<input id="columns" type="number" class="form-control form-control-sm" value="${profile.columns}" min="1" step="1"/>`);
+    const columnsDecrease = $(`<span class="material-symbols-rounded num-input-editor">remove</span>`);
+    const columnsIncrease = $(`<span class="material-symbols-rounded num-input-editor">add</span>`);
+
+    columnsInputContainer.append(columnsDecrease);
+    columnsInputContainer.append(inputColumns);
+    columnsInputContainer.append(columnsIncrease);
+    columnsInputRow.append(columnsInputContainer);
+    settings.append(columnsInputRow);
+
+    inputRows.change(() => {
+        profile.rows = parseInt(inputRows.val());
+        updateSoundboardSize();
+    });
+
+    rowsDecrease.click(() => {
+        if (profile.rows <= 1) return;
+        inputRows.val(profile.rows - 1);
+        inputRows.trigger('change');
+    });
+
+    rowsIncrease.click(() => {
+        inputRows.val(profile.rows + 1);
+        inputRows.trigger('change');
+    });
+
+    inputColumns.change(() => {
+        profile.columns = parseInt(inputColumns.val());
+        updateSoundboardSize();
+    });
+
+    columnsDecrease.click(() => {
+        if (profile.columns <= 1) return;
+        inputColumns.val(profile.columns - 1);
+        inputColumns.trigger('change');
+    });
+
+    columnsIncrease.click(() => {
+        inputColumns.val(profile.columns + 1);
+        inputColumns.trigger('change');
+    });
+
+    $('body').append(settings);
+    settings.css('left', `calc(100% - ${settings.outerWidth() + 8}px)`);
+    settings.css('top', (settingsBtn.offset().top - settings.outerHeight() - 8) + 'px');
+
+    $(document).click((e) => {
+        if ($(e.target).closest('#settingsMenu').length) return;
+        hideSettings();
+    });
+    $(document).contextmenu((e) => {
+        if ($(e.target).closest('#settingsMenu').length) return;
+        hideSettings();
+    });
+
+    if (e != null) e.stopPropagation();
+}
+
+function hideSettings() {
+    if (settings != null) {
+        settings.off('click');
+        settings.off('contextmenu');
+
+        settings.find('input').off('change');
+        settings.find('.num-input-editor').off('click');
+
+        settings.remove();
+        settings = null;
+    }
+}
+
+function updateSoundboardSize() {
+    window.electronAPI.setSoundboardSize(profile.id, profile.columns, profile.rows);
+    generateSoundboard();
 }
 
 /* PROFILES */
