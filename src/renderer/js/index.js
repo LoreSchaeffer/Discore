@@ -50,6 +50,8 @@ $(document).ready(async () => {
 
     sbSettings = await window.electronAPI.getSoundboardSettings();
     player.setVolume(sbSettings.volume);
+    player.setOutputDevice(sbSettings.output_device);
+    player.loop(sbSettings.loop);
 
     switch (sbSettings.loop) {
         case "none":
@@ -79,7 +81,6 @@ $(document).ready(async () => {
 
     updateProgressValue(volumeSlider, sbSettings.volume);
     setVolumeIcon(sbSettings.volume);
-    player.setOutputDevice(sbSettings.output_device);
 
     trackSrc.click(() => {
         window.electronAPI.openBrowser(trackSrc.text());
@@ -338,10 +339,12 @@ function sbRightClick(e) {
     const items = [
         {
             text: 'Play now',
+            icon: 'play_arrow',
             callback: () => sbLeftClick.call(btn)
         },
         {
             text: 'Add to queue',
+            icon: 'playlist_add',
             callback: () => ctxAddToQueue(row, col)
         },
         {
@@ -349,10 +352,12 @@ function sbRightClick(e) {
         },
         {
             text: 'Choose File',
+            icon: 'publish',
             callback: () => ctxChooseFile(row, col)
         },
         {
             text: 'Settings',
+            icon: 'settings',
             callback: () => ctxSettings(row, col)
         },
         {
@@ -360,10 +365,12 @@ function sbRightClick(e) {
         },
         {
             text: 'Copy Button',
+            icon: 'content_copy',
             callback: () => ctxCopyButton(row, col)
         },
         {
             text: 'Paste Button',
+            icon: 'content_paste',
             classes: (copiedButton == null ? ['disabled'] : []),
             callback: () => ctxPasteButton(row, col)
         },
@@ -372,10 +379,12 @@ function sbRightClick(e) {
         },
         {
             text: 'Copy Style',
+            icon: 'content_copy',
             callback: () => ctxCopyStyle(row, col)
         },
         {
             text: 'Paste Style',
+            icon: 'content_paste',
             classes: (copiedStyle == null ? ['disabled'] : []),
             callback: () => ctxPasteStyle(row, col)
         },
@@ -384,6 +393,7 @@ function sbRightClick(e) {
         },
         {
             text: 'Clear',
+            icon: 'delete',
             classes: ['danger'],
             callback: () => ctxClear(row, col)
         }

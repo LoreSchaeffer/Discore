@@ -28,7 +28,7 @@ const startApp = async () => {
     registerGlobalShortcuts();
 
     mainWindow = new BrowserWindow({
-        icon: 'icon.png',
+        icon: 'assets/icon.png',
         width: CONFIG.config.width,
         height: CONFIG.config.height,
         minWidth: 1080,
@@ -153,7 +153,9 @@ ipcMain.on('open_button_settings', (event, profile, row, col) => {
 });
 
 ipcMain.on('open_play_now_window', (event) => {
-    openModal(-1, 500, 600, false, 'media_selector.html');
+    openModal(-1, 500, 600, false, 'media_selector.html', (modal) => {
+        modal.webContents.send('button', null);
+    });
 });
 
 
@@ -406,6 +408,10 @@ ipcMain.handle('swap_buttons', (event, profile, row1, col1, row2, col2) => {
 
         resolve([button1, button2]);
     });
+});
+
+ipcMain.on('delete_button', (event, profile, row, col) => {
+    DB.deleteButton(profile, row, col);
 });
 
 ipcMain.on('media_selector_button', async (event, profile, button, parent, callback) => {

@@ -16,7 +16,7 @@
     "name": "LoreSchaeffer",
     "email": "lorenzo.multicore.network"
   },
-  "license": "MIT",
+  "license": "All rights reserved",
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
     "jquery": "^3.7.1",

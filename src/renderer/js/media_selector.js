@@ -20,7 +20,7 @@ window.electronAPI.handleButton((event, btn) => {
         $('#navProfileContainer').prepend($(`<span id="btnTitle">Button ${btn.row + 1} . ${btn.col + 1}</span>`));
     } else {
         $('#navProfileContainer').prepend($(`<span id="btnTitle">Play now</span>`));
-        saveBtn.html('<span class="material-symbols-rounded">play</span>Play');
+        saveBtn.html('<span class="material-symbols-rounded">play_arrow</span>Play');
     }
 });
 
