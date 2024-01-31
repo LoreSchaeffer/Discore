@@ -10,6 +10,9 @@ let parentId = -1;
 let button = null;
 let callback = null;
 
+const player = new Audio();
+let playingPreview = false;
+
 window.electronAPI.handleButton((event, btn) => {
     button = btn;
 
@@ -32,6 +35,11 @@ window.electronAPI.handleCallback((event, c) => {
 $(document).ready(() => {
     const height = $(window).height() - resultsContainer.offset().top - $('#buttons').outerHeight(true) - 22;
     resultsContainer.css('height', height + 'px');
+
+    window.electronAPI.getSoundboardSettings().then((settings) => {
+        player.volume = settings.volume / 100;
+        player.setSinkId(settings.outputDevice).catch((e) => {});
+    });
 });
 
 openFileBtn.click(async () => {
@@ -101,6 +109,26 @@ function search() {
             window.electronAPI.openBrowser($(this).attr('data-target'));
         });
 
+        const previewButtons = $('.preview');
+
+        previewButtons.on('click', async function(e) {
+            const button = $(this);
+
+            if (button.text() === 'pause') {
+                player.pause();
+                previewButtons.text('play_arrow');
+            } else {
+                previewButtons.text('play_arrow');
+                button.text('pause');
+
+                player.src = await window.electronAPI.getStreamUrl(button.parent().attr('data-url'));
+                player.load();
+                player.play();
+            }
+
+            e.stopPropagation();
+        });
+
         try {
             resultsContainer.scrollTo(0, 0);
         } catch (e) {
@@ -117,6 +145,7 @@ function createResult(track) {
     resultElement.append(thumbnailElement);
     resultElement.append(`<div class="title-block"><h2 class="title">${escapeHtml(track.title)}</h2><p class="url" data-target="${track.uri}">${track.uri}</p></div>`);
     resultElement.append(`<p class="duration">${formatDuration(track.duration / 1000)}</p>`);
+    resultElement.append(`<span class="material-symbols-rounded preview">play_arrow</span>`)
 
     resultsContainer.append(resultElement);
 }

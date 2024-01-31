@@ -52,7 +52,8 @@ const DEF_CONFIG = {
     volume: 50,
     output_device: 'default',
     active_profile: '',
-    loop: 'none'
+    loop: 'none',
+    font_size: 13,
 };
 
 module.exports = Config;

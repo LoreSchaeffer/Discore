@@ -53,9 +53,7 @@
     font-weight: 400;
     cursor: pointer;
     user-select: none;
-    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
     transition: all 100ms ease-in-out;
     border: 1px solid transparent;
     border-radius: 4px;
@@ -85,7 +83,6 @@
 }
 
 .sb-btn span {
-    overflow: hidden;
     text-overflow: ellipsis;
     white-space: normal;
     max-width: 100%;

@@ -173,6 +173,19 @@ volumeBtn.click(() => {
 
 settingsBtn.click(showSettings);
 
+$(document).on('wheel', (e) => {
+    if (!e.ctrlKey) return;
+
+    if (e.originalEvent.deltaY < 0) sbSettings.font_size += 1;
+    else sbSettings.font_size -= 1;
+
+    window.electronAPI.setFontSize(sbSettings.font_size);
+    $('.sb-btn').find('span').css({
+        'font-size': sbSettings.font_size + 'px',
+        'line-height': sbSettings.font_size + 'px'
+    });
+});
+
 /* IPC LISTENERS */
 
 window.electronAPI.handleButtonUpdate((event, button) => fillButton(button));
@@ -223,7 +236,13 @@ function fillSoundboard() {
     window.electronAPI.getButtons(profile.id).then((buttons) => {
         buttons.forEach(fillButton);
 
-        $('.sb-btn').draggable({
+        const btns = $('.sb-btn');
+        btns.find('span').css({
+            'font-size': sbSettings.font_size + 'px',
+            'line-height': sbSettings.font_size + 'px'
+        });
+
+        btns.draggable({
             scroll: false,
             revert: true,
             revertDuration: 0,
@@ -375,6 +394,7 @@ function sbRightClick(e) {
 }
 
 /* CTX MENU CALLBACKS */
+
 async function ctxAddToQueue(row, col) {
     const track = await window.electronAPI.getTrack(profile.id, row, col);
     if (track == null) return;
@@ -412,8 +432,14 @@ async function ctxCopyButton(row, col) {
 async function ctxPasteButton(row, col) {
     if (copiedButton == null) return;
 
-    const button = await window.electronAPI.getButton(profile.id, row, col);
-    if (button == null) return;
+    let button = await window.electronAPI.getButton(profile.id, row, col);
+    if (button == null) {
+        button = {
+            row: row,
+            col: col,
+            profile_id: profile.id,
+        };
+    }
 
     button.btn_title = copiedButton.btn_title;
     button.txt_color = copiedButton.txt_color;
@@ -429,7 +455,7 @@ async function ctxPasteButton(row, col) {
     button.thumbnail = copiedButton.thumbnail;
 
     fillButton(button);
-    window.electronAPI.updateButton(profile.id, button);
+    window.electronAPI.setButton(profile.id, button);
 }
 
 async function ctxCopyStyle(row, col) {
@@ -460,7 +486,7 @@ async function ctxPasteStyle(row, col) {
     button.brd_h_color = copiedStyle.brd_h_color;
 
     fillButton(button);
-    window.electronAPI.updateButton(profile.id, button);
+    await window.electronAPI.setButton(profile.id, button);
 }
 
 function ctxClear(row, col) {
@@ -657,6 +683,7 @@ function testPlayback(ctxItem) {
 }
 
 /* PLAYLIST */
+
 function showPlaylist(e) {
     if (playlist != null) playlist.remove();
     if (settings != null) hideSettings(e);
@@ -772,6 +799,7 @@ function hidePlaylist() {
 }
 
 /* SETTINGS */
+
 function showSettings(e) {
     if (settings != null) settings.remove();
     if (playlist != null) hidePlaylist(e);
@@ -867,7 +895,7 @@ function hideSettings() {
 }
 
 function updateSoundboardSize() {
-    window.electronAPI.setSoundboardSize(profile.id, profile.columns, profile.rows);
+    window.electronAPI.setSoundboardSize(profile.id, profile.rows, profile.columns);
     generateSoundboard();
 }
 
@@ -888,10 +916,17 @@ async function showProfileMenu(e) {
             submenu: [
                 {
                     text: 'Rename',
+                    icon: 'edit',
                     callback: renameProfile
                 },
                 {
+                    text: 'Export',
+                    icon: 'output',
+                    callback: exportProfile
+                },
+                {
                     text: 'Delete',
+                    icon: 'delete',
                     classes: ['danger'],
                     callback: deleteProfile
                 }
@@ -905,6 +940,11 @@ async function showProfileMenu(e) {
     });
 
     items.push({classes: ['spacer']});
+    items.push({
+        text: 'Import Profile',
+        icon: 'input',
+        callback: importProfile
+    });
     items.push({
         text: 'New Profile',
         icon: 'add',
@@ -982,4 +1022,14 @@ function setNewProfile(newProfile) {
     window.electronAPI.setActiveProfile(newProfile.id);
     $('#activeProfile').text(newProfile.name);
     generateSoundboard();
+}
+
+function importProfile() {
+    window.electronAPI.importProfile().then((profile) => {
+        setNewProfile(profile);
+    });
+}
+
+function exportProfile(ctxItem, parentItem) {
+    window.electronAPI.exportProfile(parentItem.attr('data-value'));
 }

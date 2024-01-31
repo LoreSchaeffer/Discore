@@ -1,5 +1,6 @@
 const {app, BrowserWindow, ipcMain, shell, dialog, globalShortcut} = require('electron');
 const {video_basic_info} = require('play-dl');
+const fs = require('fs');
 const path = require('path');
 const play = require('play-dl');
 const https = require('https');
@@ -14,9 +15,9 @@ const DB = new Database(CONFIG_DIR);
 const windows = {};
 let mainWindow;
 
-//TODO Allow to preview tracks from media selector
-//TODO Find metadata for local files
-//TODO Use online metadata service
+//TODO Find metadata for local files (eventually using online services)
+//TODO Add support for spotify
+//TODO Text color not updating when hovered
 
 if (require('electron-squirrel-startup')) {
     app.quit();
@@ -164,12 +165,13 @@ ipcMain.handle('get_soundboard_settings', () => {
     settings.output_device = CONFIG.config.output_device;
     settings.active_profile = CONFIG.config.active_profile;
     settings.loop = CONFIG.config.loop;
+    settings.font_size = CONFIG.config.font_size;
 
     return settings;
 });
 
-ipcMain.on('set_soundboard_size', (event, profile, width, height) => {
-    DB.resizeProfile(profile, width, height);
+ipcMain.on('set_soundboard_size', (event, profile, rows, cols) => {
+    DB.resizeProfile(profile, rows, cols);
 });
 
 ipcMain.on('set_volume', (event, volume) => {
@@ -191,6 +193,11 @@ ipcMain.handle('set_active_profile', (event, profile) => {
 
 ipcMain.on('set_loop', (event, loop) => {
     CONFIG.config.loop = loop;
+    CONFIG.save();
+});
+
+ipcMain.on('set_font_size', (event, size) => {
+    CONFIG.config.font_size = size;
     CONFIG.save();
 });
 
@@ -226,12 +233,80 @@ ipcMain.handle('delete_profile', (event, id) => {
             } else {
                 await DB.deleteProfile(id);
                 const profiles = await DB.getProfiles();
+                await DB.deleteButtons(id);
                 return resolve(profiles[0]);
             }
         } catch (error) {
             reject(error);
         }
     });
+});
+
+ipcMain.handle('import_profile', async (event) => {
+    const {filePaths} = await dialog.showOpenDialog({
+        title: 'Import profile',
+        defaultPath: app.getPath('documents'),
+        filters: [
+            {
+                name: 'JSON',
+                extensions: ['json']
+            }
+        ]
+    });
+
+    if (!filePaths || !filePaths[0]) return; //TODO Show error message
+
+    const data = JSON.parse(fs.readFileSync(filePaths[0]));
+
+    if (data.profile == null || data.buttons == null) return; //TODO Show error message
+
+    if (data.profile.name == null || data.profile.name.length === 0) data.profile.name = 'Imported profile';
+    const profile = await DB.createProfile(data.profile.name);
+
+    if (data.profile.rows != null && data.profile.rows > 0) profile.rows = data.profile.rows;
+    if (data.profile.columns != null && data.profile.columns > 0) profile.columns = data.profile.columns;
+    await DB.resizeProfile(profile.id, profile.rows, profile.columns);
+
+    data.buttons.forEach((btn) => {
+        if (btn.row == null || btn.col == null) return;
+        if (btn.uri == null || btn.uri.length === 0) return;
+        if (btn.duration == null || btn.duration <= 0) return;
+
+        const button = btn;
+        button.profile_id = profile.id;
+        delete button.id;
+
+        DB.addButton(profile.id, button);
+    });
+
+    return profile;
+});
+
+ipcMain.on('export_profile', async (event, id) => {
+    const profile = await DB.getProfile(id);
+    if (profile == null) return; //TODO Show error message
+
+    const buttons = await DB.getButtons(id);
+
+    const exportData = {
+        profile: profile,
+        buttons: buttons
+    };
+
+    const {filePath} = await dialog.showSaveDialog({
+        title: 'Export profile',
+        defaultPath: path.join(app.getPath('documents'), profile.name.replace(/[^a-z0-9]/gi, '_') + '.json'),
+        filters: [
+            {
+                name: 'JSON',
+                extensions: ['json']
+            }
+        ]
+    });
+
+    if (!filePath) return; //TODO Show error message
+
+    fs.writeFileSync(filePath, JSON.stringify(exportData, null, 2));
 });
 
 
@@ -252,7 +327,7 @@ ipcMain.handle('get_track', (event, profile, row, col) => {
     return new Promise(async (resolve, reject) => {
         try {
             const button = await DB.getButton(profile, row, col);
-            if (button == null) return reject();
+            if (button == null) return resolve(null);
 
             if (isYouTubeUrl(button.uri)) {
                 if (!(await isYouTubeUrlValid(button.url))) {
@@ -348,7 +423,13 @@ ipcMain.handle('search', (event, query) => {
 
     try {
         return new Promise(async (resolve, reject) => {
-            const videos = await play.search(query, {limit: 20});
+            let videos;
+
+            if (isYouTubeUrl(query)) {
+                videos = [(await play.video_basic_info(query)).video_details];
+            } else {
+                videos = await play.search(query, {limit: 20});
+            }
 
             resolve(videos.map((video) => {
                 return {
@@ -372,6 +453,10 @@ ipcMain.on('play_now', async (event, track) => {
     }
 
     mainWindow.webContents.send('play_now', track);
+});
+
+ipcMain.handle('get_stream_url', (event, uri) => {
+    return getStreamUrl(uri);
 });
 
 
@@ -485,6 +570,8 @@ function generateWindowId() {
 
 async function setButton(profile, button) {
     try {
+        if (button.url == null) button.url = await getStreamUrl(button.uri);
+
         const btn = await DB.getButton(profile, button.row, button.col);
 
         if (btn != null) return await DB.updateButton(profile, button);

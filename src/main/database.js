@@ -307,6 +307,14 @@ const Database = class {
         }
     }
 
+    async deleteButtons(profile) {
+        try {
+            await this.Button.destroy({where: {profile_id: profile}});
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
     async close() {
         await this.sequelize.close();
     }

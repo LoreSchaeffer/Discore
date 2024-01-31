@@ -35,17 +35,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // Settings
     getSoundboardSettings: () => ipcRenderer.invoke('get_soundboard_settings'),
-    setSoundboardSize: (profile, width, height) => ipcRenderer.send('set_soundboard_size', profile, width, height),
+    setSoundboardSize: (profile, rows, cols) => ipcRenderer.send('set_soundboard_size', profile, rows, cols),
     setVolume: (volume) => ipcRenderer.send('set_volume', volume),
     setMediaOutput: (device) => ipcRenderer.send('set_media_output', device),
     setActiveProfile: (profile) => ipcRenderer.invoke('set_active_profile', profile),
     setLoop: (loop) => ipcRenderer.send('set_loop', loop),
+    setFontSize: (size) => ipcRenderer.send('set_font_size', size),
 
     // Profiles
     getProfiles: () => ipcRenderer.invoke('get_profiles'),
     createProfile: (name) => ipcRenderer.invoke('create_profile', name),
     renameProfile: (id, name) => ipcRenderer.invoke('rename_profile', id, name),
     deleteProfile: (id) => ipcRenderer.invoke('delete_profile', id),
+    importProfile: () => ipcRenderer.invoke('import_profile'),
+    exportProfile: (id) => ipcRenderer.send('export_profile', id),
 
     // Buttons
     getButtons: (profile) => ipcRenderer.invoke('get_buttons', profile),
@@ -60,4 +63,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Misc
     search: (query) => ipcRenderer.invoke('search', query),
     playNow: (track) => ipcRenderer.send('play_now', track),
+    getStreamUrl: (uri) => ipcRenderer.invoke('get_stream_url', uri),
 });

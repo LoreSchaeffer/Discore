@@ -148,3 +148,13 @@
 .result:hover .duration {
     color: var(--text-secondary-hover);
 }
+
+.result .preview {
+    color: var(--text-primary);
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.result .preview:hover {
+    color: var(--text-primary-hover);
+}

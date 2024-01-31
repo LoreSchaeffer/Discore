@@ -26,6 +26,11 @@ const saveBtn = $('#save');
 let row;
 let col;
 let button;
+let sbSettings;
+
+$(document).ready(async () => {
+    sbSettings = await window.electronAPI.getSoundboardSettings();
+});
 
 window.electronAPI.handleButton((event, btn) => {
     button = btn;
@@ -138,6 +143,11 @@ function createPreview() {
     preview.append(icon);
     preview.append(text);
     $('#stylePreview').append(preview);
+
+    text.css({
+        'font-size': sbSettings.font_size + 'px',
+        'line-height': sbSettings.font_size + 'px'
+    });
 }
 
 $('#openMediaSelector').click(() => {
