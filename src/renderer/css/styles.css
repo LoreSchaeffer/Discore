@@ -449,7 +449,7 @@ body {
     border-radius: 4px;
     padding: 5px;
     min-width: 150px;
-    z-index: 500;
+    z-index: 1000;
 }
 
 .context-menu ul {
